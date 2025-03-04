@@ -1,0 +1,231 @@
+import 'dart:convert';
+import 'package:online_ams/Modules.dart' ;
+import 'package:flutter/material.dart';
+import 'package:online_ams/adminScreens/adminScreen.dart';
+import 'package:http/http.dart' as http;
+
+class OTPScreen extends StatefulWidget {
+  final int faculty_id;
+  const OTPScreen({super.key, required this.faculty_id});
+
+  @override
+  State<OTPScreen> createState() => _OTPScrState();
+}
+
+class _OTPScrState extends State<OTPScreen> {
+
+  final formKey = GlobalKey<FormState>();
+  List<dynamic> subjectList = [], yearList = [], divisionList = [];
+  late Future<List<dynamic>> facultyDetails;
+  bool isLoadingYear = false;
+  bool isLoadingDivision = false;
+  List<String> departmentList = ["BCA", "BBA", "BCOM", "BSC", "MSC", "MCOM"];
+  String? facultyDepartment, selectedYear, selectedDivision, selectedSubject;
+
+  TextEditingController locationController = TextEditingController();
+  TextEditingController validTimeController = TextEditingController();
+
+
+  Future<void> SubjectList() async{
+    final uri = Uri.parse("$URL/fetchSubject");
+    final response = await http.post(
+      uri,
+      headers: {"Content-Type":"application/json"},
+      body: jsonEncode({
+        "faculty_id":widget.faculty_id,
+        "role":"Faculty"
+      })
+    );
+    if(response.statusCode == 200){
+      subjectList = json.decode(response.body);
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch Subject list")));
+    }
+  }
+
+  Future<void> FetchYear() async{
+
+    if(facultyDepartment == null ){
+      isLoadingYear = true;
+    }
+    final uri =Uri.parse(URL+"/fetchYearNameId");
+    final response = await http.post(
+        uri,
+        headers: {"Content-Type":"application/json"},
+        body: jsonEncode({"department":facultyDepartment})
+    );
+    if(response.statusCode == 200){
+      setState(() {
+        yearList = json.decode(response.body);
+        isLoadingYear = false;
+      });
+
+    }else{
+      setState(() {
+        yearList = [];
+        isLoadingYear = false;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch Year list")),);
+      });
+    }
+  }
+
+  Future<void> FetchDivision() async{
+    if(selectedYear == null) return;
+    setState(() {
+      isLoadingDivision = true;
+    });
+    final uri =Uri.parse(URL+"/fetchDivisionNameId");
+    final response = await http.post(
+        uri,
+        headers: {"Content-Type":"application/json"},
+        body: jsonEncode({"class_id":selectedYear})
+    );
+    if(response.statusCode == 200){
+      setState(() {
+        divisionList = json.decode(response.body);
+        isLoadingDivision = false;
+      });
+    }else{
+      setState(() {
+        divisionList = [];
+        isLoadingDivision = false;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch Division list")),);
+      });
+    }
+  }
+
+
+  @override
+  void initState() {
+    super.initState();
+    facultyDetails = Modules.FetchData("Faculty",faculty_id: widget.faculty_id.toString());
+    facultyDetails.then((details){
+      if(details.isNotEmpty){
+        setState(() {
+          facultyDepartment = details[0]["department"];
+          FetchYear();
+        });
+      }
+    });
+    SubjectList();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Code for Attendance",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)),
+        centerTitle: true,
+        backgroundColor: Colors.pink.shade50,
+      ),
+      backgroundColor: Colors.pink.shade50,
+      body: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Form(
+          key: formKey,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                children: [
+                  Text("Department: $facultyDepartment",style: TextStyle(fontSize: 20),),
+
+                  SizedBox(height: 20,),
+                  isLoadingYear ? CircularProgressIndicator() :
+                  buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: selectedYear,icon: Icons.class_outlined,
+                      onChanged: (value){ setState(() { selectedYear=value.toString(); FetchDivision();}); }, id_name: "class_id", name: "year"),
+
+                  SizedBox(height: 20,),
+                  isLoadingDivision ? CircularProgressIndicator() :
+                  buildDropDownButton(labelText: "Select Division", items: divisionList, selectedValue: selectedDivision,
+                      onChanged: (value){ setState(() { selectedDivision=value.toString(); }); },
+                      id_name: "division_id", name: "division", icon: Icons.splitscreen),
+
+                  SizedBox(height: 20,),
+                  buildDropDownButton(labelText: "Select Subject", items: subjectList, selectedValue: selectedSubject, icon: Icons.subject_outlined,
+                      onChanged: (value){ setState(() { selectedSubject=value.toString(); }); },
+                      id_name: "subject_id", name: "sub_name"),
+
+                  SizedBox(height: 20,),
+                  buildTextFormField(validTimeController, "Enter valid time (in minutes)", Icons.timer_outlined),
+
+                  SizedBox(height: 20,),
+                  buildTextFormField(locationController, "Enter area ", Icons.my_location),
+
+                  SizedBox(height: 20,),
+                  ElevatedButton(
+                      onPressed: (){
+                        String created_at = DateTime.now().toString();
+                        Modules.SaveOtp(context, "otpCode", 0, 0, 0, created_at, "expiry_time", 0);
+                        showOtpDialog();
+                      },
+                      child: Text("Submit")
+                  ),
+
+                ],
+              ),
+            )
+        ),
+      )
+    );
+  }
+
+  void showOtpDialog(){
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return AlertDialog(
+            title: Text("Code for Attendance"),
+            content: Text("Your Code is \nCode"),
+            icon: Icon(Icons.numbers_outlined),
+            elevation: 4,
+            actions: [
+              TextButton(
+                  onPressed: (){
+                    Navigator.pop(context);
+                  },
+                  child: Text("OK")
+              )
+            ],
+          );
+    });
+  }
+
+  Widget buildDropDownButton({required String labelText, required List<dynamic> items, required IconData icon,
+    required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name, required String? name }) {
+    return DropdownButtonFormField(
+      value: items.any((item) => item[id_name] == selectedValue) ? selectedValue : null,
+      validator: (value) {
+        if(value == null || value.isEmpty) return "Select $labelText";
+        return null;
+      },
+      decoration: InputDecoration(
+        icon: Icon(icon),
+        labelText: labelText,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+      items: (items ?? []).map((dynamic item){
+        return DropdownMenuItem<dynamic>(
+            value: item[id_name],
+            child: Text(item[name],)
+        );
+      }).toList(),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget buildTextFormField(TextEditingController controller, String labelText, IconData icon){
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: labelText,
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        icon: Icon(icon)
+      ),
+      validator: (value){
+        if(value == null || value.isEmpty)return labelText;
+        return null;
+      },
+    );
+  }
+}

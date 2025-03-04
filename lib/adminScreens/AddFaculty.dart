@@ -1,0 +1,290 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:online_ams/adminScreens/adminScreen.dart';
+
+class AddFacultyScreen extends StatefulWidget {
+  const AddFacultyScreen({super.key});
+
+  @override
+  State<AddFacultyScreen> createState() => _AddFacultyScreenState();
+}
+
+class _AddFacultyScreenState extends State<AddFacultyScreen> {
+
+  final formKey=GlobalKey<FormState>();
+  String? filename;
+  File? selectedFile;
+  String? selectedOption="Add Single Record";
+  var facultyFirstNameController=TextEditingController();
+  var facultyLastNameController=TextEditingController();
+  var facultyMiddleNameController=TextEditingController();
+  var facultyContactNoController=TextEditingController();
+  var facultyDobController=TextEditingController();
+  String? facultyDept;
+  DateTime? dob;
+  final List<String> dept=["BCA","BBA","BCOM","BSC","MCOM","MSC"];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Add Faculty",style: TextStyle(fontSize: 20,fontWeight: FontWeight.bold),),
+        backgroundColor: Colors.pink.shade50,
+        centerTitle: true,
+      ),
+      backgroundColor: Colors.pink.shade50,
+      body: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Column(
+            children: [
+              Text("Select type: ",style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  buildRadioButton("Add Single Record"),
+                  buildRadioButton("Add Excel File"),
+                ],
+              ),
+              SizedBox(height: 20,),
+              if(selectedOption == "Add Single Record")...[
+                buildAddSingleRecord()
+              ]else...[
+                Center(
+                  child: GestureDetector(
+                    child: Container(
+                      width: 300,height: 150,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.grey,width: 1),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.cloud_upload,size: 50, color: Colors.blueGrey,),
+                          SizedBox(height: 10,),
+                          Text(
+                            filename ?? "Upload Excel File",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.black45),
+                          ),
+                          if(filename != null)...[
+                            SizedBox(height: 10,),
+                            Text("Total Records: 150")
+                          ]
+                        ],
+                      ),
+                    ),
+                    onTap:PickExcelFile,
+                  ),
+                ),
+                SizedBox(height: 20,),
+                if(selectedFile != null)
+                  ElevatedButton(
+                      onPressed: (){
+                        uploadExcelFile();
+                      },
+                      child: Text("Upload and Save File")
+                  )
+              ]
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+Widget buildRadioButton(String type){
+  return Row(
+    children: [
+      Radio(
+          value: type,
+          groupValue: selectedOption,
+          onChanged: (value){
+            setState(() {
+              selectedOption = value;
+            });
+          }
+      ),
+      Text(type,style: TextStyle(fontSize: 20),)
+    ],
+  );
+}
+
+Widget buildAddSingleRecord(){
+  return Form(
+    key: formKey,
+    child: Column(
+      children: [
+
+        buildTextFormField("Enter First Name",Icons.person,facultyFirstNameController),
+        SizedBox(height: 20,),
+        buildTextFormField("Enter Middle Name",Icons.person,facultyMiddleNameController),
+        SizedBox(height: 20,),
+        buildTextFormField("Enter Last Name",Icons.person,facultyLastNameController),
+        SizedBox(height: 20,),
+        buildTextFormField("Enter Contact Number",Icons.contact_page,facultyContactNoController),
+
+        SizedBox(height: 20,),
+        DropdownButtonFormField<String>(
+            value: facultyDept,
+            decoration: InputDecoration(
+                labelText: "Select Department",
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))
+            ),
+
+            items: dept.map((deptValue){
+              return DropdownMenuItem(
+                value: deptValue,
+                child: Text(deptValue),
+              );
+            }).toList(),
+            onChanged: (value){
+              setState(() {
+                facultyDept=value;
+              });
+            },
+          validator: (value){
+              if (value == null) return "Please select the department";
+              return null;
+          },
+        ),
+
+        SizedBox(height: 20,),
+        buildDobField(),
+
+        SizedBox(height: 20,),
+        ElevatedButton(
+            onPressed: (){
+              if (formKey.currentState!.validate()){
+                insertFacultyData();
+                
+              }
+            },
+            child: Text("Add")
+        )
+      ],
+    ),
+  );
+}
+
+Future<void> insertFacultyData() async{
+    String facultyFirstName=facultyFirstNameController.text.toString();
+    String facultyMiddleName=facultyMiddleNameController.text.toString();
+    String facultyLastName=facultyLastNameController.text.toString();
+    String facultyContactNo=facultyContactNoController.text.toString();
+    String facultyDepartment=facultyDept.toString();
+    String facultyDob=facultyDobController.text.toString();
+    print(facultyDob+" -------------------------------------");
+    final uri=Uri.parse(URL+"/addSingleRecord");
+    final response = await http.post(
+      uri,
+      headers: {"Content-Type":"application/json"},
+      body: jsonEncode({
+        "role":"Faculty",
+        "first_name":facultyFirstName,
+        "middle_name":facultyMiddleName,
+        "last_name":facultyLastName,
+        "contact_no":facultyContactNo,
+        "department":facultyDepartment,
+        "dob":facultyDob
+      })
+    );
+    if(response.statusCode == 200){
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data inserted successfully")));
+    }else{
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to insert data")));
+    }
+}
+
+Widget buildTextFormField(String hintText,IconData icon,TextEditingController controller){
+  return  TextFormField(
+    controller: controller,
+    decoration: InputDecoration(
+      hintText: hintText,prefixIcon: Icon(icon),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+    ),
+    validator: (value){
+      if (value == null || value.isEmpty) return "Please enter the value";
+      return null;
+    },
+  );
+}
+
+Widget buildDobField(){
+    return TextFormField(
+      controller: facultyDobController,
+      readOnly: true,
+      decoration: InputDecoration(
+        labelText: "Select Date of Birth",
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        suffixIcon: Icon(Icons.calendar_today_outlined),
+      ),
+      onTap: ()=>SelectDate(context),
+      validator: (value){
+        if(value == null || value.isEmpty) return "Please select date";
+        return null;
+      },
+    );
+}
+
+Future<void> SelectDate(BuildContext context) async{
+    DateTime? dateSelected= await showDatePicker(
+        context: context,
+        firstDate: DateTime(1900),
+        initialDate: DateTime.now(),
+        lastDate: DateTime.now(),
+    );
+    if(dateSelected != null){
+      setState(() {
+        dob=dateSelected;
+        facultyDobController.text=DateFormat('yyyy-MM-dd').format(dateSelected);
+      });
+    }
+}
+
+Future<void> PickExcelFile() async {
+  FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['xlsx', 'csv']
+  );
+
+  if (result != null && result.files.isNotEmpty) {
+    setState(() {
+      selectedFile = File(result.files.single.path!);
+      filename = result.files.single.name;
+    });
+  }
+}
+
+Future<void> uploadExcelFile() async {
+    if (selectedFile == null) return;
+    var request = http.MultipartRequest(
+        'POST',
+        Uri.parse(URL + "/upload")
+    );
+    request.files.add(
+        await http.MultipartFile.fromPath('file', selectedFile!.path));
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      setState(() {
+        filename = null;
+        selectedFile = null;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("File Uploaded Successfully")));
+    }
+    else {
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Upload Failed")));
+    }
+  }
+  
+}
+
