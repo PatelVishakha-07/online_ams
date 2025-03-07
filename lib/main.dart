@@ -37,7 +37,7 @@ class LoginScreen extends StatefulWidget{
 class _LoginScreen extends State<LoginScreen> {
 
   final formKey=GlobalKey<FormState>();
-
+  bool obscurePassword = true;
   String selectedRole = "Admin";
 
   final usernameController=TextEditingController();
@@ -62,8 +62,8 @@ class _LoginScreen extends State<LoginScreen> {
       int statusCode= await CheckCredentials(username, password,selectedRole);
       if(statusCode == 200){
         if(selectedRole == "Student"){
-          Navigator.push(context, MaterialPageRoute(builder: (context) => StudentCameraScreen(username: username,)));
-          //Navigator.push(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: username,)));
+          //Navigator.push(context, MaterialPageRoute(builder: (context) => StudentCameraScreen(username: username,)));
+          Navigator.push(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: username,)));
         }else if(selectedRole == "Faculty") {
           Navigator.push(context, MaterialPageRoute(
               builder: (context) => FacultyHomeScreen(username: username)));
@@ -139,14 +139,14 @@ class _LoginScreen extends State<LoginScreen> {
                   SizedBox(height: 20),
 
                   if(selectedRole == "Admin")...[
-                    buildTextField("Enter Username", Icons.person,usernameController),
+                    buildTextField("Enter Username", Icons.person, usernameController),
                     SizedBox(height: 15,),
-                    buildTextField("Enter Password", Icons.lock,passwordController, isPassword: true)
+                    buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true)
                   ] else
                     ...[
-                      buildTextField("Enter Username", Icons.person,usernameController),
+                      buildTextField("Enter Username", Icons.person, usernameController),
                       SizedBox(height: 15,),
-                      buildTextField("Enter Password", Icons.lock,passwordController,isPassword: true),
+                      buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true),
                     ],
 
                   SizedBox(height: 25,),
@@ -157,7 +157,9 @@ class _LoginScreen extends State<LoginScreen> {
                     height: 50,
                     child: ElevatedButton(
                       onPressed: () {
-                        validateField();
+                        if(formKey.currentState!.validate()){
+                          validateField();
+                        }
                       },
                       child: Text("Login", style: TextStyle(fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -178,17 +180,26 @@ class _LoginScreen extends State<LoginScreen> {
     );
   }
 
-  Widget buildTextField(String hintText, IconData icon, TextEditingController controller,{bool isPassword = false}) {
+  Widget buildTextField(String hintText, IconData leadingIcon, TextEditingController controller,{IconData? trailingIcon, bool isPassword = false}) {
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
         hintText: hintText,
-        prefixIcon: Icon(icon, color: Colors.redAccent,),
+        prefixIcon: Icon(leadingIcon, color: Colors.redAccent,),
+        suffixIcon: isPassword ?
+        IconButton(
+            onPressed: (){
+              setState(() {
+                obscurePassword = !obscurePassword;
+              });
+            },
+            icon: Icon(obscurePassword ? Icons.visibility_off : Icons.visibility),
+        ) : null,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         filled: true,
         fillColor: Colors.grey.shade200,
       ),
-      obscureText: isPassword,
+      obscureText: isPassword ? obscurePassword : false,
       validator: (value){
         if(value!.isEmpty || value == null){
           return hintText;

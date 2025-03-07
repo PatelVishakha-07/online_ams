@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:online_ams/Modules.dart';
+import 'package:online_ams/adminScreens/FacultyDetails.dart';
 import 'package:online_ams/adminScreens/UpdateFaculty.dart';
-import 'ListDetails.dart' as ld;
 import 'ListStudent.dart' as lstd;
 
 class FacultyListScreen extends StatefulWidget {
@@ -15,13 +15,44 @@ class FacultyListScreen extends StatefulWidget {
 class _FacultyListScreenState extends State<FacultyListScreen> {
 
   late Future<List<dynamic>> facultyList;
+  List<dynamic> filteredFaculty = [], allFaculty = [];
+  TextEditingController searchController = TextEditingController();
+  String searchQuery = "";
   Set<int> selectedIndexes={};
   int totalIndex=0;
 
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    facultyList=Modules.FetchData("Faculty", dept: widget.facultyDepartment);
+ @override
+  void initState() {
+    super.initState();
+    FetchFaculty();
+    searchController.addListener((){
+      setState(() {
+        searchQuery = searchController.text.toLowerCase();
+        FilterFaculty();
+      });
+    });
+  }
+
+  void FetchFaculty() async{
+    List<dynamic> faculty = await Modules.FetchData("Faculty", dept: widget.facultyDepartment);
+    setState(() {
+      allFaculty = faculty;
+      filteredFaculty = faculty;
+      totalIndex = faculty.length;
+    });
+  }
+
+  void FilterFaculty(){
+    if(searchQuery.isEmpty){
+      filteredFaculty = allFaculty;
+    }else{
+      filteredFaculty = allFaculty.where((faculty){
+        return faculty["faculty_name"].toLowerCase().contains(searchQuery);
+      }).toList();
+    }
+    setState(() {
+      totalIndex = filteredFaculty.length;
+    });
   }
 
   @override
@@ -53,14 +84,13 @@ class _FacultyListScreenState extends State<FacultyListScreen> {
                     )
                 );
                 if(confirmDelete){
-                  List<dynamic> facultyData = await facultyList;
                   for(int index in selectedIndexes){
-                    var item = facultyData[index];
-                    await lstd.DeleteData(context, "Faculty", faculty_id: item["faculty_id"]);
+                    var item = filteredFaculty[index];
+                    await Modules.DeleteData(context,option: "Faculty", faculty_id: item["faculty_id"]);
                   }
                   setState(() {
                     selectedIndexes.clear();
-                    facultyList = Modules.FetchData("Faculty", dept: widget.facultyDepartment);
+                    FetchFaculty();
                   });
                 }
               },
@@ -83,123 +113,118 @@ class _FacultyListScreenState extends State<FacultyListScreen> {
       backgroundColor: Colors.pink.shade50,
       body: Column(
         children: [
+          Padding(
+              padding: EdgeInsets.all(8.0),
+            child: TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: "Search Faculty...",
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
           Expanded(
-              child: FutureBuilder(
-                  future: facultyList,
-                  builder: (context,snapshot){
-                    if(snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator(),);
-                    else if(snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"),);
-                    else if(!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text("No data Found"),);
-                    totalIndex=snapshot.data!.length;
+              child: filteredFaculty.isEmpty ? Center(child: Text("No students found")) :
+              ListView.builder(
+                  itemCount: filteredFaculty.length,
+                  itemBuilder: (context,index){
+                    var item=filteredFaculty[index];
+                    bool isSelected=selectedIndexes.contains(index);
+                    return Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Card(
+                        color: isSelected ? Colors.redAccent.shade100 :Colors.blue.shade100,
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: ListTile(
+                          leading: Icon(Icons.person,color: Colors.redAccent),
+                          title: Text(item["faculty_name"],style: TextStyle(fontWeight: FontWeight.bold,fontSize: 23)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              PopupMenuButton<String>(
+                                icon: Icon(Icons.more_vert),
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    child: Text("Update"),
+                                    value: "update",
+                                  ),
+                                  PopupMenuItem(
+                                    child: Text("Delete"),
+                                    value: "delete",
+                                  ),
+                                ],
+                                onSelected: (value) async{
+                                  if(value == "update"){
+                                    if(!context.mounted) return;
+                                    await Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                        UpdateFacultyScreen(faculty_id: item["faculty_id"],)));
 
-                    return ListView.builder(
-                        itemCount: snapshot.data!.length,
-                        itemBuilder: (context,index){
-                          var item=snapshot.data![index];
-                          bool isSelected=selectedIndexes.contains(index);
-                          return Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Card(
-                              color: isSelected ? Colors.redAccent.shade100 :Colors.blue.shade100,
-                              elevation: 4,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                              child: ListTile(
-                                leading: Icon(Icons.person,color: Colors.redAccent),
-                                title: Text(item["faculty_name"],style: TextStyle(fontWeight: FontWeight.bold,fontSize: 23)),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    PopupMenuButton<String>(
-                                      icon: Icon(Icons.more_vert),
-                                      itemBuilder: (context) => [
-                                        PopupMenuItem(
-                                            child: Text("Update"),
-                                          value: "update",
-                                        ),
-                                        PopupMenuItem(
-                                          child: Text("Delete"),
-                                          value: "delete",
-                                        ),
-                                      ],
-                                      onSelected: (value) async{
-                                        if(value == "update"){
-                                          if(!context.mounted) return;
-                                          await Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                                          UpdateFacultyScreen(faculty_id: item["faculty_id"],)));
-
-                                          setState(() {
-                                            facultyList = Modules.FetchData("Faculty", dept: widget.facultyDepartment);
-                                          });
-                                        }
-                                        else if(value == "delete"){
-                                          bool confirmDelete = await showDialog(
-                                              context: context,
-                                              builder: (context) =>
-                                                  AlertDialog(
-                                                    title: Text(
-                                                        "Delete Selected Faculty"),
-                                                    content: Text(
-                                                        "Are You Sure You want to delete the Selected Faculty?"),
-                                                    actions: [
-                                                      TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(
-                                                                  context, false),
-                                                          child: Text("Cancel")
-                                                      ),
-                                                      TextButton(
-                                                          onPressed: () =>
-                                                              Navigator.pop(
-                                                                  context, true),
-                                                          child: Text("Delete",
-                                                              style: TextStyle(
-                                                                  color: Colors
-                                                                      .red))
-                                                      ),
-                                                    ],
-                                                  )
-                                          );
-                                          if (confirmDelete) {
-                                            List<dynamic> facultyData = await facultyList;
-                                            for (int index in selectedIndexes) {
-                                              var item = facultyData[index];
-                                              await lstd.DeleteData(context, "Faculty", faculty_id: item["faculty_id"].toString());
-                                            }
-                                            setState(() {
-                                              selectedIndexes.clear();
-                                              facultyList = Modules.FetchData("Faculty", dept: widget.facultyDepartment);
-                                            });
-                                          }
-                                        }
-                                      },
-                                    )
-                                  ],
-                                ),
-                                onTap: (){
-                                  if(selectedIndexes.isNotEmpty){
                                     setState(() {
-                                      if(isSelected){
-                                        selectedIndexes.remove(index);
-                                        return;
-                                      }else{
-                                        selectedIndexes.add(index);
-                                        return;
-                                      }
+                                      facultyList = Modules.FetchData("Faculty", dept: widget.facultyDepartment);
                                     });
                                   }
-                                  lstd.DeleteData(context, "Faculty",faculty_id: item["faculty_id"]);
-                                },
-                                onLongPress: (){
-                                  setState(() {
-                                    selectedIndexes.add(index);
-                                  });
-                                },
-                              ),
-                            ),
-                          );
-                        });
-                  }
-              )
+                                  else if(value == "delete"){
+                                    bool confirmDelete = await showDialog(
+                                        context: context,
+                                        builder: (context) =>
+                                            AlertDialog(
+                                              title: Text("Delete Selected Faculty"),
+                                              content: Text("Are You Sure You want to delete the Selected Faculty?"),
+                                              actions: [
+                                                TextButton(
+                                                    onPressed: () => Navigator.pop(context, false),
+                                                    child: Text("Cancel")
+                                                ),
+                                                TextButton(
+                                                    onPressed: () => Navigator.pop(context, true),
+                                                    child: Text("Delete", style: TextStyle(color: Colors.red))
+                                                ),
+                                              ],
+                                            )
+                                    );
+                                    if (confirmDelete) {
+                                      List<dynamic> facultyData = await facultyList;
+                                      for (int index in selectedIndexes) {
+                                        var item = facultyData[index];
+                                        await Modules.DeleteData(context, option: "Faculty", faculty_id: item["faculty_id"].toString());
+                                      }
+                                      setState(() {
+                                        selectedIndexes.clear();
+                                        FetchFaculty();
+                                      });
+                                    }
+                                  }},
+                              )
+                            ],
+                          ),
+                          onTap: (){
+                            if(selectedIndexes.isNotEmpty){
+                              setState(() {
+                                if(isSelected){
+                                  selectedIndexes.remove(index);
+                                  return;
+                                }else{
+                                  selectedIndexes.add(index);
+                                  return;
+                                }
+                              });
+                            }
+                            else{
+                              Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                  FacultyDetailScreen(faculty_id: item["faculty_id"])));
+                            }
+                            },
+                          onLongPress: (){
+                            setState(() {
+                              selectedIndexes.add(index);
+                            });
+                            },
+                        ),
+                      ),
+                    );
+                  })
           )
         ],
       )

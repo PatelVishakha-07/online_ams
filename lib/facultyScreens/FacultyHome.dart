@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/ListSubject.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:online_ams/facultyScreens/FacultySubjectList.dart';
@@ -27,7 +28,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   @override
   void initState() {
     super.initState();
-    FetchFacultyId(widget.username).then((id){
+    Modules.FetchId(widget.username,"Faculty").then((id){
       setState(() {
         faculty_id = id;
       });
@@ -108,19 +109,3 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   }
 }
 
-
-Future<int> FetchFacultyId(String username) async{
-  final uri=Uri.parse("$URL/fetchId");
-  final response = await http.post(
-      uri,
-      headers: {"Content-Type":"application/json"},
-      body: jsonEncode({
-        "username":username,
-        "role":"Faculty"
-      })
-  );
-  if(response.statusCode == 200){
-    return json.decode(response.body);
-  }
-  return 0;
-}

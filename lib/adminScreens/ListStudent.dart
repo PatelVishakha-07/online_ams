@@ -19,13 +19,86 @@ class ListStudentScreen extends StatefulWidget {
 class _ListStudentScreenState extends State<ListStudentScreen> {
 
   late Future<List<dynamic>> studentList;
+  List<dynamic> filteredStudents = [];
+  List<dynamic> allStudents = [];
+  TextEditingController searchController = TextEditingController();
+  String searchQuery = "";
   Set<int> selectedIndexes={};
   int totalIndex=0;
   
   @override
   void initState() {
     super.initState();
-    studentList=Modules.FetchData("Student",dept: widget.stdDepartment,year: widget.stdYear, division: widget.stdDivision);
+    fetchStudents();
+    searchController.addListener((){
+      setState(() {
+        searchQuery = searchController.text.toLowerCase();
+        FilterStudents();
+      });
+    });
+  }
+
+  void fetchStudents() async{
+    List<dynamic> students = await Modules.FetchData("Student",dept: widget.stdDepartment,year: widget.stdYear, division: widget.stdDivision);
+    setState(() {
+      allStudents = students;
+      filteredStudents = students;
+      totalIndex = students.length;
+    });
+  }
+
+  void FilterStudents(){
+    if(searchQuery.isEmpty){
+      filteredStudents = allStudents;
+    }else{
+      filteredStudents = allStudents.where((student){
+        return student["name"].toLowerCase().contains(searchQuery);
+      }).toList();
+    }
+    setState(() {
+      totalIndex = filteredStudents.length;
+    });
+  }
+
+  Future<void> PromoteStudents() async {
+    bool confirmPromotion = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Promote Students"),
+          content: Text("Are you sure you want to promote all the students to the next year?"),
+          actions: [
+            TextButton(
+                onPressed: (){
+                  Navigator.pop(context,false);
+                }, child: Text("Cancel",)
+            ),
+            TextButton(
+                onPressed: (){
+                  Navigator.pop(context,true);
+                }, child: Text("Promote",style: TextStyle(color: Colors.green))
+            )
+          ],
+        )
+    );
+
+    if(confirmPromotion){
+      for(var student in allStudents){
+        String newYear = GetNewYear(student["year"]);
+      }
+    }
+  }
+
+  String GetNewYear(String currentYear){
+    switch(currentYear.toUpperCase()){
+      case "FY":
+        return "SY";
+      case "SY":
+        return "TY";
+      case "TY":
+        return "Passed out";
+      default:
+        return currentYear;
+    }
   }
   
   @override
@@ -56,8 +129,8 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
                 bool confirmDelete = await showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: Text("Delete Selected Items"),
-                        content: Text("Are You Sure You want to delete all Selected Items?"),
+                      title: Text("Remove Selected Students"),
+                        content: Text("Are You Sure You want to remove all Selected students?"),
                         actions: [
                           TextButton(
                               onPressed: () => Navigator.pop(context,false),
@@ -65,130 +138,132 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
                           ),
                           TextButton(
                               onPressed: () => Navigator.pop(context,true),
-                              child: Text("Delete",style: TextStyle(color: Colors.red))
+                              child: Text("Remove",style: TextStyle(color: Colors.red))
                           ),
                         ],
                     )
                 );
                 if(confirmDelete){
-                  List<dynamic> studentData = await studentList;
                   for(int index in selectedIndexes){
-                    var item = studentData[index];
-                    await DeleteData(context, "Student", student_id: item["student_id"].toString());
+                    var item = filteredStudents[index];
+                    await Modules.DeleteData(context, option: "Student", student_id: item["student_id"].toString());
                   }
                   setState(() {
                     selectedIndexes.clear();
-                    studentList = Modules.FetchData("Student", dept: widget.stdDepartment);
+                    fetchStudents();
                   });
                 }
               },
           ),
-        ]:[],
+        ]:[
+          IconButton(
+              onPressed: (){},
+              icon: Icon(Icons.upgrade),
+            tooltip: "Promote Students",
+
+          )
+        ],
       ),
       backgroundColor: Colors.pink.shade50,
       body:Column(
         children: [
+          Padding(
+              padding: EdgeInsets.all(8.0),
+            child: TextField(
+              controller: searchController,
+              decoration: InputDecoration(
+                hintText: "Search Studnets...",
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
           Expanded(
-              child: FutureBuilder(
-                  future: studentList,
-                  builder: (context,snapshot){
-                    if(snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator(),);
-                    else if(snapshot.hasError) return Center(child: Text("Error: ${snapshot.error}"),);
-                    else if(!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text("No data Found"),);
-
-                    totalIndex=snapshot.data!.length;
-                    return ListView.builder(
-                      itemCount: totalIndex,
-                        itemBuilder: (context,index){
-                        var item=snapshot.data![index];
-                        bool isSelected=selectedIndexes.contains(index);
-                        return Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Card(
-                            color: isSelected ? Colors.redAccent.shade100 :Colors.blue.shade100,
-                            elevation: 4,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                            child: ListTile(
-                              leading: Icon(Icons.person,color: Colors.redAccent),
-                              title: Text(item["name"],style: TextStyle(fontWeight: FontWeight.bold,fontSize: 23)),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  PopupMenuButton<String>(
-                                      itemBuilder: (context) => [
-                                        PopupMenuItem(
-                                            child: Text("Update"),
-                                          value: "update",
-                                        ),
-                                        PopupMenuItem(
-                                          child: Text("Delete"),
-                                          value: "delete",
-                                        )
-                                      ],
-                                    icon: Icon(Icons.more_vert),
-                                    onSelected: (value)async {
-                                      if (value == "update") {
-                                        List<dynamic> yearList = await Modules.FetchYear(widget.stdDepartment);
-                                        List<dynamic> divisionList = await Modules.FetchDivision(widget.stdDivision);
-                                        Navigator.push(context, MaterialPageRoute(builder:
-                                            (context) => UpdateStudentScreen(student_id: item["student_id"],
-                                              yearList: yearList, divisionList: divisionList,)));
+              child: filteredStudents.isEmpty ? Center(child: Text("No students found")) :
+              ListView.builder(
+                  itemCount: filteredStudents.length,
+                  itemBuilder: (context,index){
+                    var item=filteredStudents[index];
+                    bool isSelected=selectedIndexes.contains(index);
+                    return Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Card(
+                        color: isSelected ? Colors.redAccent.shade100 :Colors.blue.shade100,
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: ListTile(
+                          leading: Icon(Icons.person,color: Colors.redAccent),
+                          title: Text(item["name"],style: TextStyle(fontWeight: FontWeight.bold,fontSize: 23)),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              PopupMenuButton<String>(
+                                  itemBuilder: (context) => [
+                                    PopupMenuItem(
+                                      child: Text("Update"),
+                                      value: "update",
+                                    ),
+                                    PopupMenuItem(
+                                      child: Text("Remove"),
+                                      value: "remove",
+                                    )
+                                  ],
+                                  icon: Icon(Icons.more_vert),
+                                  onSelected: (value)async {
+                                    if (value == "update") {
+                                      List<dynamic> yearList = await Modules.FetchYear(widget.stdDepartment);
+                                      List<dynamic> divisionList = await Modules.FetchDivision(widget.stdDivision);
+                                      Navigator.push(context, MaterialPageRoute(builder:
+                                          (context) => UpdateStudentScreen(student_id: item["student_id"],
+                                            yearList: yearList, divisionList: divisionList,)));
                                       }
-                                      else if (value == "delete") {
-                                        bool confirmDelete = await showDialog(
-                                            context: context,
-                                            builder: (context) =>
-                                                AlertDialog(
-                                                  title: Text(
-                                                      "Delete Selected Student"),
-                                                  content: Text(
-                                                      "Are You Sure You want to delete Selected Student?"),
-                                                  actions: [
-                                                    TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Cancel")),
-                                                    TextButton(
-                                                        onPressed: () => Navigator.pop(context, true),
-                                                        child: Text("Delete", style: TextStyle(color: Colors.red))
-                                                    ),
-                                                  ],
-                                                )
-                                        );
-                                        if (confirmDelete) {
-                                            await DeleteData(context, "Student", student_id: item["student_id"].toString());
-                                          setState(() {
-                                            studentList = Modules.FetchData("Student", dept: widget.stdDepartment);
-                                          });
-                                        }
+                                    else if (value == "remove") {
+                                      bool confirmDelete = await showDialog(
+                                          context: context,
+                                          builder: (context) =>
+                                              AlertDialog(
+                                                title: Text("Remove Selected Student"),
+                                                content: Text("Are You Sure You want to Remove Selected Student?"),
+                                                actions: [
+                                                  TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Cancel")),
+                                                  TextButton(
+                                                      onPressed: () => Navigator.pop(context, true),
+                                                      child: Text("Remove", style: TextStyle(color: Colors.red))
+                                                  ),
+                                                ],
+                                              )
+                                      );
+                                      if (confirmDelete) {
+                                        await Modules.DeleteData(context, option: "Student", student_id: item["student_id"].toString());
+                                        setState(() {
+                                          fetchStudents();
+                                        });
                                       }
                                     }
-                                  )
-                                ],
-                              ),
-                              onTap: (){
-                                if(selectedIndexes.isNotEmpty) {
-                                  setState(() {
-                                    if(isSelected){
-                                      selectedIndexes.remove(index);
-                                    }else{
-                                      selectedIndexes.add(index);
-                                    }
-                                  });
-                                }else{
-                                  Navigator.push(context,
-                                    MaterialPageRoute(builder: (context) => StudentDetailScreen(student_id: item["student_id"]),),);
-                                }
-
-                              },
-                              onLongPress: (){
-                                setState(() {
-                                  selectedIndexes.add(index);
-                                });
-                              },
-                            ),
+                                  })
+                            ],
                           ),
-                        );
-                    });
-                  } 
-              )
+                          onTap: (){
+                            if(selectedIndexes.isNotEmpty) {
+                              setState(() {
+                                if(isSelected){
+                                  selectedIndexes.remove(index);
+                                }else{
+                                  selectedIndexes.add(index);
+                                }
+                              });
+                            }else{
+                              Navigator.push(context,
+                                MaterialPageRoute(builder: (context) => StudentDetailScreen(student_id: item["student_id"]),),);
+                            }},
+                          onLongPress: (){
+                            setState(() {
+                              selectedIndexes.add(index);
+                            });},
+                        ),
+                      ),
+                    );
+                  })
           )
         ],
       )
@@ -196,25 +271,4 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
   }
 }
 
-Future<void> DeleteData(BuildContext context, String option, {String? student_id, String? faculty_id,
- String? class_id, String? division_id}) async{
-  final uri=Uri.parse(URL+"/deleteRecord");
-  final response=await http.post(
-      uri,
-      headers: {"Content-Type":"application/json"},
-      body: jsonEncode({
-        "option":option,
-        "student_id":student_id.toString(),
-        "faculty_id":faculty_id.toString(),
-        "class_id":class_id.toString(),
-        "division_id":division_id.toString()
-      })
-  );
-  if(response.statusCode == 200){
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Record Deleted Successfully")));
-  }else{
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Delete Record")));
-  }
-
-}
 

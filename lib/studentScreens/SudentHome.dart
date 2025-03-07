@@ -3,8 +3,11 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
+import 'package:online_ams/studentScreens/Attendance.dart';
+import 'package:online_ams/studentScreens/Camera.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   final String username;
@@ -17,15 +20,18 @@ class StudentHomeScreen extends StatefulWidget {
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
   List<Map<String,dynamic>> studentDashboardItems=[
-    {"Title":"Mark Attendance", "Icon":Icons.co_present, "route": ""},
+    {"Title":"Mark Attendance", "Icon":Icons.co_present, "route": "mark_attendance"},
     {"Title":"            View\n Attendance Report", "Icon":Icons.report, "route": ""},
   ];
   String todayDate=DateFormat('dd MMMM yyyy').format(DateTime.now());
   String todayDay=DateFormat('EEEE').format(DateTime.now());
 
-  String? base64Image;
   bool isLoading = false;
   Uint8List? imageBytes;
+  int? student_id;
+  late Future<List<dynamic>> studentDetails = Future.value([]);
+  String? stdDept, stdYear, stdDiv, stdName, stdContact, stdDob;
+  String? classId, divId, semester_id, academic_year_id;
 
   Future<void> FetchImage() async{
     setState(() {
@@ -58,6 +64,27 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   void initState() {
     FetchImage();
     super.initState();
+    Modules.FetchId(widget.username,"Student").then((id){
+      setState(() {
+        student_id = id;
+        studentDetails = Modules.FetchSingleData("Student", student_id: student_id.toString());
+        studentDetails.then((values){
+          if(values.isNotEmpty){
+            stdDept = values[0]["department"];
+            stdName = values[0]["name"];
+            stdContact = values[0]["contact_no"];
+            stdYear = values[0]["year"];
+            stdDiv = values[0]["division"];
+            stdDob = values[0]["dob"];
+            classId = values[0]["class_id"].toString();
+            divId = values[0]["division_id"].toString();
+            semester_id = values[0]["semester_id"].toString();
+            academic_year_id = values[0]["academic_year_id"].toString();
+          }
+        });
+
+      });
+    });
   }
 
   @override
@@ -128,6 +155,41 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           ],
                         ),
                       ),
+                      onTap: () async{
+                        if(studentDashboardItems[index]["route"] == "mark_attendance"){
+
+                          if(stdDept == null || stdYear == null || divId == null || classId == null){
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Loading Student details, please wait...")));
+                            return;
+                          }
+                          Map result = await Attendance.ShowMarkAttendanceDialog(context, student_id.toString(),
+                              stdDept!, stdYear!, divId!, classId!);
+                          String subject_id = result["subject_id"];
+                          String status = result["msg"];
+
+                          if(status == "Valid"){
+                            String msg = await Navigator.push(context, MaterialPageRoute(builder: (context) => AttendanceCameraScreen(student_id: student_id.toString())));
+                            if(msg == "Face Matched"){
+                              String option = await Attendance.MarkAttendance(context, student_id.toString(), classId.toString(),
+                                  divId.toString(), subject_id ,semester_id.toString(), academic_year_id.toString());
+
+                              if(option == "Marked"){
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Attendance marked successfully")));
+                              }else{
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to marked Attendance")));
+                              }
+                            }
+                            else if(msg == "Face Did Not Matched"){
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Face Did Not Matched")));
+                            }
+                            else if (msg == "No Face Found"){
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No Face Found")));
+                            }
+                          }
+                        }else{
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("OTP Code is Not Valid")));
+                        }
+                      },
                     );
                   }
               ),

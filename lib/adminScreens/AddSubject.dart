@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
 
@@ -17,12 +18,12 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   final formKey = GlobalKey<FormState>();
   TextEditingController subjectNameController = TextEditingController();
   TextEditingController subjectCodeController = TextEditingController();
-  String? selectedDepartment, selectedYear;
+  String? selectedDepartment, selectedYear, selectedAcademicYear, selectedSemester ;
   var selectedFaculty;
-  final List<String> subjectYearList = ["FY", "SY", "TY"];
+  List<String> academicYearList = [], semesterList = [], yearList = [];
   final List<String> deptList = ["BCA", "BBA", "BCOM", "BSC"];
   late List<dynamic> facultyList=[];
-  bool isLoadingFaculty = false;
+  bool isLoadingFaculty = false, isLoadingYear = false;
 
   void getSubjectOldDetails(String subName, String subCode, String subYear, String subDept) {
     subjectNameController = TextEditingController(text: subName);
@@ -56,29 +57,42 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   }
 
   Future<void> FetchYearList() async {
-    if (selectedDepartment == null) return;
+    if (selectedAcademicYear == null) return;
     setState(() {
-      isLoadingFaculty = true;
+      isLoadingYear= true;
     });
-    final uri = Uri.parse(URL + "fetchFacultyNameId");
+    final uri = Uri.parse(URL + "fetchYearNameId");
     final response = await http.post(
         uri,
         headers: {"Content-Type": "application/json"},
-        body: {"department": selectedDepartment}
+        body: jsonEncode({"academic_year": selectedAcademicYear})
     );
     if (response.statusCode == 200) {
       setState(() {
-        facultyList = jsonDecode(response.body);
-        isLoadingFaculty = false;
+        yearList.clear();
+        yearList.addAll(List<String>.from(jsonDecode(response.body)));
+        isLoadingYear = false;
       });
     } else {
       setState(() {
-        facultyList = [];
-        isLoadingFaculty = false;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Failed to fetch faculty list")),);
+        yearList.clear();
+        isLoadingYear = false;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch year list")));
       });
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchAcademicYears();
+  }
+
+  Future<void> fetchAcademicYears() async {
+    List<String> years = await Modules.FetchAcademicYearList(); // Ensure this function returns List<String>
+    setState(() {
+      academicYearList = years;
+    });
   }
 
   @override
@@ -109,8 +123,26 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                     subjectCodeController, TextInputType.number),
                 SizedBox(height: 25,),
 
-                buildDropDownButton(labelText: "Select Year", items: subjectYearList, selectedValue: selectedYear, onChanged: (value){
-                  setState(() { selectedYear = value; });
+                buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: selectedAcademicYear,
+                    onChanged: (value) { setState(() async {
+                    selectedAcademicYear = value;
+                    selectedSemester = null;
+                    FetchYearList();
+                    semesterList= await Modules.FetchSemesterList(value!) ;
+                  }); }),
+
+                SizedBox(height: 25),
+                buildDropDownButton(labelText:  "Select Year", items: yearList, selectedValue: selectedYear, onChanged: (value) {
+                  setState(() {
+                    selectedYear = value;
+                  });
+                }),
+
+                SizedBox(height: 25,),
+                buildDropDownButton(labelText:  "Select Semester", items: semesterList, selectedValue: selectedSemester, onChanged: (value){
+                  setState(() {
+                    selectedSemester = value;
+                  });
                 }),
 
                 SizedBox(height: 25,),
@@ -198,7 +230,6 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   }
 
   Future<void> SaveSubject() async{
-    print("----------------------------------$selectedFaculty");
     String subjectName = subjectNameController.text.toString();
     String subjectCode = subjectCodeController.text.toString();
 
@@ -211,7 +242,9 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
           "subject_code":subjectCode,
           "subject_department":selectedDepartment,
           "subject_year":selectedYear,
-          "faculty_id":selectedFaculty
+          "faculty_id":selectedFaculty,
+          "academic_year_id": selectedAcademicYear,
+          "semester_id": selectedSemester
         })
     );
     if(response.statusCode == 200){
@@ -236,7 +269,9 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
           "subject_code":subjectCode,
           "subject_department":selectedDepartment,
           "subject_year":selectedYear,
-          "faculty_id":selectedFaculty
+          "faculty_id":selectedFaculty,
+          "academic_year_id": selectedAcademicYear, // Send Academic Year ID
+          "semester_id": selectedSemester
         })
     );
     if(response.statusCode == 200){

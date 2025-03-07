@@ -26,14 +26,12 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   var studentContactNoController=TextEditingController();
   var studentDobController=TextEditingController();
   var studentRollNoController=TextEditingController();
-  String? studentClass, studentDivision, studentDepartment;
+  String? studentClass ="", studentDivision="", studentDepartment="", studentSemester="", studentAcademicYear="";
   DateTime? studentDob;
-  late List<dynamic> yearList = [];
-  late List<dynamic> divisionList = [];
-  bool isLoadingYear = false;
-  bool isLoadingDivision = false;
+  late List<dynamic> yearList = [], divisionList = [], semesterList = [], academicYearList = [];
+  bool isLoadingYear = false, isLoadingDivision = false, isLoadingSemester = false, isLoadingAcademicYear = false;
 
-  final List<String> deptList =["BCA","BBA","BCOM","BSC"];
+  final List<String> deptList =["BCA","BBA","BCOM","BSC","MSC","MCOM"];
 
   Future<void> FetchYear() async{
     if(studentDepartment == null) return;
@@ -85,12 +83,43 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     }
   }
 
+  Future<void> FetchSemesters() async {
+    setState(() => isLoadingSemester = true);
+    final uri = Uri.parse("$URL/fetchSemesters");
+    final response = await http.post(uri, headers: {"Content-Type": "application/json"});
+    setState(() {
+      if (response.statusCode == 200) {
+        semesterList = json.decode(response.body);
+      } else {
+        semesterList = [];
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch Semesters")));
+      }
+      isLoadingSemester = false;
+    });
+  }
+
+  Future<void> FetchAcademicYears() async {
+    setState(() => isLoadingAcademicYear = true);
+    final uri = Uri.parse("$URL/fetchAcademicYear");
+    final response = await http.post(uri, headers: {"Content-Type": "application/json"});
+
+    setState(() {
+      if (response.statusCode == 200) {
+        academicYearList = json.decode(response.body);
+      } else {
+        academicYearList = [];
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch Academic Years")));
+      }
+      isLoadingAcademicYear = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.pink[50],
-        title: Text("Add Students",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+        title: Text("Add Students\n    (Admin)",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
         centerTitle: true,
       ),
       backgroundColor: Colors.pink[50],
@@ -181,6 +210,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           "dob":studentbirthDate,
           "class_id":studentClass,
           "division_id":studentDivision,
+          "semester_id": studentSemester,
+          "academic_year_id": studentAcademicYear
         })
     );
 
@@ -225,7 +256,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
           SizedBox(height: 20,),
           DropdownButtonFormField<String>(
-            value: studentDepartment,
+            value: studentDepartment != "" ? studentDepartment : null,
             decoration: InputDecoration(
                 labelText: "Select Department",
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))
@@ -239,7 +270,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             }).toList(),
             onChanged: (value){
               setState(() {
-                studentDepartment=value;
+                studentDepartment=value.toString();
                 FetchYear();
               });
             },
@@ -256,6 +287,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             setState(() {
                 studentClass = value.toString();
                 FetchDivision();
+                FetchSemesters();
+                FetchAcademicYears();
               });}, id_name: "class_id",name: "year"),
 
           SizedBox(height: 20,),
@@ -266,6 +299,20 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               });}, id_name: "division_id", name: "division"),
 
           SizedBox(height: 20,),
+          isLoadingSemester ? CircularProgressIndicator() :
+          buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue:  studentSemester,
+              onChanged:  (value) { setState(() {
+              studentSemester = value.toString();
+            });}, id_name:  "semester_id", name:  "semester_number"),
+
+          SizedBox(height: 20,),
+          isLoadingAcademicYear ? CircularProgressIndicator() :
+          buildDropDownButton(labelText: "Select Academic Year", items:  academicYearList, selectedValue:  studentAcademicYear,
+              onChanged: (value) { setState(() {
+              studentAcademicYear = value.toString();
+            });}, id_name: "academic_year_id", name: "academic_year"),
+
+          SizedBox(height: 20,),
           buildTextFormField("Enter Roll number",Icons.confirmation_number_outlined,studentRollNoController),
           SizedBox(height: 20,),
           buildDobField(),
@@ -273,8 +320,10 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           SizedBox(height: 20,),
           ElevatedButton(
               onPressed: (){
-                insertStudentData();
-                Navigator.pop(context);
+                if(formKey.currentState!.validate()){
+                  insertStudentData();
+                }
+                //Navigator.pop(context);
               },
               child: Text("Add")
           )
@@ -332,19 +381,19 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   Widget buildDropDownButton({required String labelText, required List<dynamic> items,
     required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name, required String? name }) {
     return DropdownButtonFormField(
-      value: items.any((item) => item[id_name] == selectedValue) ? selectedValue : null,
+      value: items.any((item) => item[id_name] == selectedValue) ? selectedValue ?? "" : null,
       validator: (value) {
-        if(value == null || value.isEmpty) return "Please select $labelText";
+        if(value == null) return "Please select $labelText";
         return null;
       },
       decoration: InputDecoration(
         labelText: labelText,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      items: (items ?? []).map((dynamic item){
+      items:  (items ?? []).map((dynamic item){
         return DropdownMenuItem<dynamic>(
-            value: item[id_name],
-            child: Text(item[name],)
+            value: item[id_name].toString(),
+            child: Text(item[name].toString(),)
         );
       }).toList(),
       onChanged: onChanged,

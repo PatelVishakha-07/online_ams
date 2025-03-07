@@ -38,7 +38,9 @@ dependencies:
   excel:
   multi_select_flutter:
   google_mlkit_face_detection:
+  google_ml_kit:
   geolocator:
+  pinput:
   face_camera:
   image:
   camera:
@@ -59,6 +61,22 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash:
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: "asset/images/attendance_logo.png"
+  android_12:
+    image: "asset/images/attendance_logo.png"
+    color: "#ffffff"
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "asset/images/attendance_logo.png"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "asset/images/attendance_logo.png"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -69,6 +87,7 @@ flutter:
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
+
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:

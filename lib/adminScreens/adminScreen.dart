@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:online_ams/adminScreens/AcademicSetup.dart';
 import 'package:online_ams/adminScreens/Faculty.dart';
 import 'package:online_ams/adminScreens/ListDetails.dart';
 import 'package:online_ams/adminScreens/Students.dart';
 import 'package:online_ams/adminScreens/Subject.dart';
 
-var URL="https://a136-2409-4080-9480-46ec-309e-5194-1f96-4db0.ngrok-free.app";
+var URL="https://53e0-2409-4080-8d4b-e8a9-157a-1f9e-8ba1-c61d.ngrok-free.app";
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -17,6 +18,7 @@ class AdminScreen extends StatefulWidget {
 class _AdminScreenState extends State<AdminScreen> {
 
     List<Map<String,dynamic>> dashboardItems=[
+      {"Title":"Academic Setup", "Icon":Icons.school, "route": AcademicSetupScreen()},
       {"Title":"Class", "Icon":Icons.class_, "route": ListScreen(option:"Class")},
       {"Title":"Faculty", "Icon":Icons.person, "route": FacultyScreen()},
       {"Title":"Student", "Icon":Icons.people, "route": StudentScreen()},

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
-import 'ListStudent.dart' as lstd;
 import 'package:http/http.dart' as http;
 
 class UpdateStudentScreen extends StatefulWidget {
@@ -27,7 +26,7 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
   var studentDobController=TextEditingController();
   var studentRollNoController=TextEditingController();
 
-  String? studentClass, studentDivision, studentDepartment;
+  String? studentClass, studentDivision, studentDepartment, studentAcademicYear, studentSemester;
   String oldFirstName="", oldLastName="", oldMiddleName="";
 
   List<dynamic> studentData = [];
@@ -35,8 +34,7 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
   DateTime? studentDob;
   final List<String> dept =["BCA","BBA","BCOM","BSC"];
 
-  late List<dynamic> studentYearList = [];
-  late List<dynamic> studentDivisionList = [];
+  late List<dynamic> studentYearList = [], studentDivisionList = [], semesterList=[], academicYearList=[];
 
   Future<void> FetchOldData() async{
     final uri=Uri.parse(URL+"/fetchSingleRecord");
@@ -82,10 +80,31 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
 
       studentClass = student["year"];
       studentDivision = student["division"];
+
+      // Set academic year and semester
+      studentAcademicYear = student["academic_year"].toString();
+      studentSemester = student["semester"].toString();
+
       setState(() {
         studentYearList = widget.yearList;
         studentDivisionList = widget.divisionList;
       });
+      await FetchAcademicYearAndSemester();
+    }
+  }
+
+  Future<void> FetchAcademicYearAndSemester() async {
+    final uri = Uri.parse(URL + "/fetchAcademicSemesterList");
+    final response = await http.get(uri, headers: {"Content-Type": "application/json"});
+
+    if (response.statusCode == 200) {
+      var data = json.decode(response.body);
+      setState(() {
+        academicYearList = data["academic_years"];
+        semesterList = data["semesters"];
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to load Academic Year & Semester")));
     }
   }
 
@@ -162,6 +181,16 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
               id_name: "division_id", name: "division"),
 
           SizedBox(height: 20,),
+          buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: studentAcademicYear,
+              onChanged: (value) { setState(() { studentAcademicYear = value.toString(); }); },
+              id_name: "academic_id", name: "academic_year"),
+
+          SizedBox(height: 20,),
+          buildDropDownButton(labelText: "Select Semester", items: semesterList,
+              selectedValue: studentSemester, onChanged: (value) { setState(() { studentSemester = value.toString(); }); },
+              id_name: "semester_id", name: "semester"),
+
+          SizedBox(height: 20,),
           buildTextFormField("Enter Roll number",Icons.confirmation_number_outlined,studentRollNoController),
           SizedBox(height: 20,),
           buildDobField(),
@@ -174,8 +203,10 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
                 String contact=studentContactNoController.text.toString();
                 String rollNo=studentRollNoController.text.toString();
                 String formattedDob=studentDob != null ? DateFormat('yyyy-MM-dd').format(studentDob!) : "";
+
                 Modules.updateStudentFacultyData(context, studentDepartment, name, contact, formattedDob, "Student",
-                division: studentDivision, year: studentClass, roll_no: rollNo, student_id: widget.student_id.toString());
+                division: studentDivision, year: studentClass, roll_no: rollNo, student_id: widget.student_id.toString(),
+                studentAcademicYear: studentAcademicYear, studentSemester: studentSemester);
                 Navigator.pop(context);
               },
               child: Text("Update")

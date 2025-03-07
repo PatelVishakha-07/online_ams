@@ -8,7 +8,7 @@ import 'ListStudent.dart' as lstd;
 import 'package:http/http.dart' as http;
 
 class UpdateFacultyScreen extends StatefulWidget {
-  final String faculty_id;
+  final int faculty_id;
 
   const UpdateFacultyScreen({super.key, required this.faculty_id});
 
@@ -31,29 +31,29 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
   final List<String> dept=["BCA","BBA","BCOM","BSC","MCOM","MSC"];
 
   Future<void> FetchOldData() async{
-    final uri=Uri.parse(URL+"/updateFacultyStudentData");
+    final uri=Uri.parse(URL+"/fetchSingleRecord");
     final response=await http.post(
         uri,
         headers: {"Content-Type":"application/json"},
         body: jsonEncode({
           "role":"Faculty",
-          "student_id":widget.faculty_id
+          "faculty_id":widget.faculty_id
         })
     );
     if(response.statusCode == 200){
       setState(() {
         facultyData = json.decode(response.body);
+        if(facultyData.isNotEmpty){
+          UpdateFacultyFields();
+        }
       });
-      if(facultyData.isNotEmpty){
-        UpdateFacultyFields();
-      }
     }else{
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to load Data")));
     }
   }
 
   void UpdateFacultyFields() {
-    var faculty = facultyData.firstWhere((e) => e["student_id"] == widget.faculty_id, orElse: () => null);
+    var faculty = facultyData.firstWhere((e) => e["faculty_id"] == widget.faculty_id, orElse: () => null);
     if(faculty != null){
       String fullName = faculty["name"];
       List<String> nameParts=fullName.split(" ");
@@ -90,7 +90,7 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: buildAddSingleRecord(),
-      ),
+      )
     );
   }
 
@@ -140,11 +140,11 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
           ElevatedButton(
               onPressed: (){
                 if (formKey.currentState!.validate()){
-                  String name=facultyFirstNameController.text.toString() + facultyMiddleNameController.text.toString() + facultyLastNameController.text.toString();
+                  String name= "${facultyFirstNameController.text.toString()} ${facultyMiddleNameController.text.toString()} ${facultyLastNameController.text.toString()}";
                   String contact=facultyContactNoController.text.toString();
                   String formattedDate=dob != null ? DateFormat('yyyy-MM-dd').format(dob!): "";
 
-                  Modules.updateStudentFacultyData(context, facultyDept, name, contact, formattedDate, "Faculty",faculty_id: widget.faculty_id);
+                  Modules.updateStudentFacultyData(context, facultyDept, name, contact, formattedDate, "Faculty",faculty_id: widget.faculty_id.toString());
                   Navigator.pop(context);
                 }
               },

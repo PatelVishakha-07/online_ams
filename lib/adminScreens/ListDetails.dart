@@ -175,7 +175,7 @@ class _Class_DivisionListScreenState extends State<Class_DivisionListScreen> {
                                             oldYear: item["year"],oldDiv: item["division"]);
                                       }
                                       else if(value == "delete"){
-                                        lstd.DeleteData(context, "Class", class_id: item["class_id"].toString(), division_id: item["division_id"].toString());
+                                        Modules.DeleteData(context, option: "Class", class_id: item["class_id"].toString(), division_id: item["division_id"].toString());
                                         setState(() {});
                                       }
                                     },

@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:intl/intl.dart';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
@@ -16,14 +16,14 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
 
   late List<dynamic> studentDetail = [];
 
-  String? base64Image;
+  Uint8List? stdImage;
   bool isLoading = false;
   String? stdName, stdDept, stdContact, stdDob, year, division;
 
   @override
   void initState() {
-    FetchImage();
     super.initState();
+    FetchImage();
     FetchStudentOldData();
   }
 
@@ -31,21 +31,18 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
     setState(() {
       isLoading = true;
     });
-    final uri = Uri.parse(URL + "/fetchImage");
+    final uri = Uri.parse(URL + "/getImage");
     final response = await http.post(
         uri,
         headers: {"Content-Type":"application/json"},
-        body: {
+        body: jsonEncode({
           "student_id":widget.student_id,
           "role":"Admin"
-        }
+        })
     );
     if(response.statusCode == 200){
-      final responseData = json.decode(response.body);
       setState(() {
-        if(responseData["base64Image"] != null){
-          base64Image = responseData["base64Image"];
-        }
+        stdImage = response.bodyBytes;
         isLoading = false;
       });
     }else{
@@ -76,9 +73,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
           stdContact = student["contact_no"];
 
           stdDob = student["dob"];
-          var year_division = studentDetail[1]; // Second object has year & division
-          year = year_division["year"];
-          division = year_division["division"];
+          //var year_division = studentDetail[1]; // Second object has year & division
+          year = student["year"];
+          division = student["division"];
         }
       });
     }else{
@@ -90,46 +87,51 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(((stdName?? "Student") + " Profile"),style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+        title: Text(((stdName?? "Student") + "\n                    (Profile)"),style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
         centerTitle: true,
         backgroundColor: Colors.pink[50],
       ),
       backgroundColor: Colors.pink.shade50,
-      body: Column(
-        children: [
-          Card(
-            color: Colors.blue.shade100,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),),
-            elevation: 4,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircleAvatar(
-                    radius: 80,
-                    backgroundColor: Colors.grey[300],
-                    child: base64Image != null
-                        ? ClipOval(
-                      child: Image.memory(base64Decode(base64Image!), fit: BoxFit.cover, width: 160, height: 160,),
-                    ) : Text("No Image"),
-                  ),
-                  SizedBox(height: 50,),
+      body: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          children: [
+            Card(
+              color: Colors.blue.shade100,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),),
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    CircleAvatar(
+                      radius: 80,
+                      backgroundColor: Colors.grey[300],
+                      child: ClipOval(
+                        child: isLoading ? CircularProgressIndicator() : stdImage != null ?
+                        SizedBox( width: 160, height: 160,
+                          child: FittedBox( fit: BoxFit.cover, child: Image.memory(stdImage!), ),
+                        ) : Text("No Image"),
+                      ),
+                    ),
+                    SizedBox(height: 50,),
 
-                  Text("Name: " + (stdName ?? "N/A"), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
-                  Text("Date of Birth: " + (stdDob ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                  Text("Class: " + (year ?? "N/A") + ( stdDept ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                  Text("Division: " + (division ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                  Text("Contact Number: " + (stdContact ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
-                ],
+                    Text("Name: " + (stdName ?? "N/A"), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+                    Text("Date of Birth: " + (stdDob ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+                    Text("Class: " + (year ?? "N/A") + ( stdDept ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+                    Text("Division: " + (division ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+                    Text("Contact Number: " + (stdContact ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+                  ],
+                ),
               ),
             ),
-          ),
-          SizedBox(height: 30,),
-          buildCard("Present Days", "5", Icons.event_available_outlined),
-          SizedBox(height: 30,),
-          buildCard("Absent Days", "5", Icons.minimize_outlined),
-        ],
+            SizedBox(height: 30,),
+            buildCard("Present Days", "5", Icons.event_available_outlined),
+            SizedBox(height: 30,),
+            buildCard("Absent Days", "5", Icons.minimize_outlined),
+          ],
+        ),
       ),
     );
   }
@@ -140,7 +142,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10),),
       elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(10),
+        padding: EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
