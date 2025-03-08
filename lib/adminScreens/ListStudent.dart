@@ -3,10 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/StudentDetails.dart';
 import 'package:online_ams/adminScreens/UpdateStudent.dart';
-import 'package:online_ams/adminScreens/adminScreen.dart';
-import 'ListDetails.dart' as ld;
-import 'package:http/http.dart' as http;
-import 'UpdateStudent.dart' as upStd;
 
 class ListStudentScreen extends StatefulWidget {
   final String stdDepartment, stdYear, stdDivision ;
@@ -211,11 +207,8 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
                                   icon: Icon(Icons.more_vert),
                                   onSelected: (value)async {
                                     if (value == "update") {
-                                      List<dynamic> yearList = await Modules.FetchYear(widget.stdDepartment);
-                                      List<dynamic> divisionList = await Modules.FetchDivision(widget.stdDivision);
                                       Navigator.push(context, MaterialPageRoute(builder:
-                                          (context) => UpdateStudentScreen(student_id: item["student_id"],
-                                            yearList: yearList, divisionList: divisionList,)));
+                                          (context) => UpdateStudentScreen(student_id: item["student_id"])));
                                       }
                                     else if (value == "remove") {
                                       bool confirmDelete = await showDialog(

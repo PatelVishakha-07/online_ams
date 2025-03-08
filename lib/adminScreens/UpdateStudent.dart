@@ -8,9 +8,8 @@ import 'package:http/http.dart' as http;
 
 class UpdateStudentScreen extends StatefulWidget {
   final int student_id;
-  final List<dynamic> yearList, divisionList;
 
-  const UpdateStudentScreen({super.key, required this.student_id, required this.yearList, required this.divisionList});
+  const UpdateStudentScreen({super.key, required this.student_id});
 
   @override
   State<UpdateStudentScreen> createState() => _UpdateStudentScreenState();
@@ -61,50 +60,37 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
   void UpdateStudentFields() async{
     var student = studentData.firstWhere((e) => e["student_id"] == widget.student_id, orElse: () => null);
     if(student != null){
-      String fullName = student["name"];
-      List<String> nameParts=fullName.split(" ");
-      oldFirstName=nameParts[0];
-      oldMiddleName=nameParts.length > 2 ? nameParts[1]:"";
-      oldLastName=nameParts.length > 2 ? nameParts[2] : nameParts[1];
+      setState(() {
+
+        String fullName = student["name"];
+        List<String> nameParts=fullName.split(" ");
+        oldFirstName=nameParts[0];
+        oldMiddleName=nameParts.length > 2 ? nameParts[1]:"";
+        oldLastName=nameParts.length > 2 ? nameParts[2] : nameParts[1];
 
       // Updating existing controllers
-      studentFirstNameController.text = oldFirstName;
-      studentMiddleNameController.text = oldMiddleName;
-      studentLastNameController.text = oldLastName;
-      studentContactNoController.text = student["contact_no"];
-      studentRollNoController.text = student["roll_no"].toString();
+        studentFirstNameController.text = oldFirstName;
+        studentMiddleNameController.text = oldMiddleName;
+        studentLastNameController.text = oldLastName;
+        studentContactNoController.text = student["contact_no"];
+        studentRollNoController.text = student["roll_no"].toString();
 
-      studentDob = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(student["dob"]);
-      studentDobController.text = DateFormat('yyyy-MM-dd').format(studentDob!);
-      studentDepartment = student["department"];
+        studentDob = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(student["dob"]);
+        studentDobController.text = DateFormat('yyyy-MM-dd').format(studentDob!);
+        studentDepartment = student["department"];
 
-      studentClass = student["year"];
-      studentDivision = student["division"];
+        studentClass = student["year"];
+        studentDivision = student["division"];
 
       // Set academic year and semester
-      studentAcademicYear = student["academic_year"].toString();
-      studentSemester = student["semester"].toString();
+        studentAcademicYear = student["academic_year"].toString();
+        studentSemester = student["semester"].toString();
 
-      setState(() {
-        studentYearList = widget.yearList;
-        studentDivisionList = widget.divisionList;
       });
-      await FetchAcademicYearAndSemester();
-    }
-  }
-
-  Future<void> FetchAcademicYearAndSemester() async {
-    final uri = Uri.parse(URL + "/fetchAcademicSemesterList");
-    final response = await http.get(uri, headers: {"Content-Type": "application/json"});
-
-    if (response.statusCode == 200) {
-      var data = json.decode(response.body);
-      setState(() {
-        academicYearList = data["academic_years"];
-        semesterList = data["semesters"];
-      });
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to load Academic Year & Semester")));
+      academicYearList = await Modules.FetchAcademicYearList();
+      semesterList = await Modules.FetchSemesterList(studentAcademicYear!);
+      studentYearList = await Modules.FetchYear(studentDepartment!);
+      studentDivisionList = await Modules.FetchDivision(studentClass!);
     }
   }
 

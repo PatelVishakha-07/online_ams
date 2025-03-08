@@ -299,18 +299,19 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               });}, id_name: "division_id", name: "division"),
 
           SizedBox(height: 20,),
+          isLoadingAcademicYear ? CircularProgressIndicator() :
+          buildDropDownButton(labelText: "Select Academic Year", items:  academicYearList, selectedValue:  studentAcademicYear,
+              onChanged: (value) { setState(() {
+                studentAcademicYear = value.toString();
+              });}, id_name: "academic_year_id", name: "academic_year"),
+
+          SizedBox(height: 20,),
           isLoadingSemester ? CircularProgressIndicator() :
           buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue:  studentSemester,
               onChanged:  (value) { setState(() {
               studentSemester = value.toString();
             });}, id_name:  "semester_id", name:  "semester_number"),
 
-          SizedBox(height: 20,),
-          isLoadingAcademicYear ? CircularProgressIndicator() :
-          buildDropDownButton(labelText: "Select Academic Year", items:  academicYearList, selectedValue:  studentAcademicYear,
-              onChanged: (value) { setState(() {
-              studentAcademicYear = value.toString();
-            });}, id_name: "academic_year_id", name: "academic_year"),
 
           SizedBox(height: 20,),
           buildTextFormField("Enter Roll number",Icons.confirmation_number_outlined,studentRollNoController),

@@ -12,7 +12,7 @@ class Attendance{
 
   //FETCH FACULTY LOCATION
   static Future<dynamic> FetchFacultyLocation(String class_id, String division_id) async{
-    final uri = Uri.parse(URL+"/");
+    final uri = Uri.parse(URL+"/fetchFacultyLocation");
     final response = await http.post(
         uri,
         headers: {"Content-Type":"application/json"},
@@ -22,7 +22,7 @@ class Attendance{
         })
     );
     if(response.statusCode == 200){
-      return response.body;
+      return json.decode(response.body);
     }
     return null;
   }
@@ -36,39 +36,46 @@ class Attendance{
 
   //FUNCTION TO VERIFY OTP CODE ENTERED BY STUDENT
   static Future<String> ValidateOtp(BuildContext context, String OtpCode, String class_id, String division_id, String subject_id) async{
-    Position? studentPosition = await Modules.GetCurrentLocation();
 
+    final uri = Uri.parse(URL+"/checkOTP");
+    final response = await http.post(
+        uri,
+        headers: {"Content-Type":"application/json"},
+        body: jsonEncode({
+          "otp_code":OtpCode,
+          "class_id":class_id,
+          "division_id":division_id,
+          "subject_id":subject_id
+        })
+    );
+    if(response.statusCode != 200){
+      return "Invalid";
+    }
+
+    Position? studentPosition = await Modules.GetCurrentLocation();
     if(studentPosition == null){
       return "Location Permission Required";
     }
-    final facultyLocation = await FetchFacultyLocation(class_id, division_id);
-    if (facultyLocation == null) return "Failed to fetch faculty location";
-    double faculty_latitude = facultyLocation["faculty_latitude"];
-    double faculty_longitude = facultyLocation["faculty_longitude"];
-    double allowed_radius = facultyLocation["area"];
 
-    if(CheckStudentArea(faculty_latitude, faculty_longitude, studentPosition.latitude, studentPosition.longitude, allowed_radius)){
-      final uri = Uri.parse(URL+"/checkOTP");
-      final response = await http.post(
-          uri,
-          headers: {"Content-Type":"application/json"},
-          body: jsonEncode({
-            "otp_code":OtpCode,
-            "class_id":class_id,
-            "division_id":division_id,
-            "subject_id":subject_id
-          })
-      );
-      if(response.statusCode == 200){
-        return "Valid";
-      }
-      else if (response.statusCode == 400){
-        return "Invalid";
-      }
-    }else {
+    final facultyLocationList = await FetchFacultyLocation(class_id, division_id);
+
+    double faculty_latitude =0.0, faculty_longitude=0.0, allowed_radius=0.0;
+
+    if (facultyLocationList != null && facultyLocationList.isNotEmpty) {
+      final facultyLocation = facultyLocationList[0]; // Get first item if list
+      faculty_latitude = double.parse(facultyLocation["faculty_latitude"].toString());
+      faculty_longitude = double.parse(facultyLocation["faculty_longitude"].toString());
+      allowed_radius = double.parse(facultyLocation["area"].toString());
+    }else{
+      return "Time to Mark Attendance is Over.";
+    }
+
+    if(!CheckStudentArea(faculty_latitude, faculty_longitude, studentPosition.latitude, studentPosition.longitude, allowed_radius)){
       return "You are not in the allowed area!";
     }
-    return "";
+
+    return "Valid";
+
   }
 
   // FUNCTION TO SHOW DIALOGBOX TO MARK ATTENDANCE FOR STUDENT
@@ -157,7 +164,7 @@ class Attendance{
                           String otpCode = codeController.text.trim().toString();
                           String subject_id = selectedSubject.toString();
                           String msg = await ValidateOtp(context, otpCode, class_id, division_id, subject_id);
-                          Navigator.pop(context, {"msg":msg, "sub_id":subject_id});
+                          Navigator.pop(context, {"msg":msg, "sub_id":subject_id ?? "0"});
                         }
                       },
                       child: const Text("Submit"),

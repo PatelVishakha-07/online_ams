@@ -9,6 +9,7 @@ import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:online_ams/studentScreens/Attendance.dart';
 import 'package:online_ams/studentScreens/SudentHome.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 class StudentCameraScreen extends StatefulWidget {
   final String username;
@@ -24,6 +25,15 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
   final ImagePicker imagePicker = ImagePicker();
 
   Future<void> CaptureImage() async{
+
+    var status = await Permission.camera.request();
+    if(status.isDenied){
+      await Permission.camera.request();
+    }else if(status.isPermanentlyDenied){
+      openAppSettings();
+      return;
+    }
+
     final pickedFile = await imagePicker.pickImage(
         source: ImageSource.camera,
       preferredCameraDevice: CameraDevice.front,
@@ -99,38 +109,59 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
   XFile? capturedPhoto;
   ImagePicker imagePicker = ImagePicker();
   Uint8List? imageBytes;
+  bool isProcessing = false;
   @override
   void initState() {
-    super.initState();
     CaptureFace();
+    super.initState();
   }
 
   Future<dynamic> CaptureFace() async{
+    var status = await Permission.camera.request();
+    if(status.isDenied){
+      await Permission.camera.request();
+    } else if(status.isPermanentlyDenied){
+      openAppSettings();
+      return;
+    }
     final pickedImage = await imagePicker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front);
     if(pickedImage != null){
-      String msg="";
-      setState(() async{
-        capturedPhoto == pickedImage;
-        msg = await DetectFace();
+      print("----------Captured-------- face");
+      setState(() {
+        capturedPhoto = pickedImage;
+        isProcessing = true;
       });
-      Navigator.pop(context, msg);
-
+       String msg = await DetectFace();
+       if(context.mounted){
+         Navigator.pop(context, msg);
+       }else {
+         if (mounted) {
+           Navigator.pop(context, "No Face Found");
+         }
+       }
     }
   }
 
   Future<String> DetectFace() async{
+
+    if (capturedPhoto == null) {
+      return "No Face Scanned";
+    }
+
+    print("-------Detect face");
     final uri = Uri.parse(URL+"/detectFace");
     final request = http.MultipartRequest("POST",uri);
     request.files.add(await http.MultipartFile.fromPath("image",capturedPhoto!.path));
     final response = await request.send();
     if(response.statusCode == 200){
-     return VerifyFace();
+     return await VerifyFace();
     }else{
       return "No Face Found";
     }
   }
 
   Future<String> VerifyFace() async{
+    print("---------verify face");
     final uri = Uri.parse(URL+"/compareFace");
     final request = http.MultipartRequest("POST",uri);
     request.files.add(await http.MultipartFile.fromPath("image",capturedPhoto!.path));
@@ -147,7 +178,20 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return Scaffold(
+      body: Center(
+        child: isProcessing
+            ? Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 20),
+            Text("Processing face recognition...")
+          ],
+        )
+            : Container(), // Empty container while capturing image
+      ),
+    );
   }
 }
 

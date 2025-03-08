@@ -22,7 +22,7 @@ class _OTPScrState extends State<OTPScreen> {
   bool isLoadingYear = false;
   bool isLoadingDivision = false;
   List<String> departmentList = ["BCA", "BBA", "BCOM", "BSC", "MSC", "MCOM"];
-  String? facultyDepartment, selectedYear, selectedDivision, selectedSubject;
+  String? facultyDepartment = "", selectedYear, selectedDivision, selectedSubject;
 
   TextEditingController locationController = TextEditingController();
   TextEditingController validTimeController = TextEditingController();

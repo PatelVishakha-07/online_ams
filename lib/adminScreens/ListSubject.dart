@@ -75,6 +75,7 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                                 child: ListTile(
                                   leading: Icon(Icons.subject_outlined,color: Colors.redAccent),
                                   title: Text(item["sub_name"],style: TextStyle(fontWeight: FontWeight.bold,fontSize: 23)),
+                                  subtitle:  Text("Semester: " + item["semester_no"].toString(),style: TextStyle(fontWeight: FontWeight.bold,fontSize: 23)),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [

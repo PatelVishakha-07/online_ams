@@ -62,8 +62,12 @@ class _LoginScreen extends State<LoginScreen> {
       int statusCode= await CheckCredentials(username, password,selectedRole);
       if(statusCode == 200){
         if(selectedRole == "Student"){
-          //Navigator.push(context, MaterialPageRoute(builder: (context) => StudentCameraScreen(username: username,)));
-          Navigator.push(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: username,)));
+          var value = await FetchImage(username, password);
+          if(value){
+            Navigator.push(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: username,)));
+          }else{
+            Navigator.push(context, MaterialPageRoute(builder: (context) => StudentCameraScreen(username: username,)));
+          }
         }else if(selectedRole == "Faculty") {
           Navigator.push(context, MaterialPageRoute(
               builder: (context) => FacultyHomeScreen(username: username)));
@@ -244,15 +248,35 @@ class _LoginScreen extends State<LoginScreen> {
   
 }
 
-
+Future<bool> FetchImage(String username, String password) async{
+  final uri = Uri.parse(URL + "/getImage");
+  final response = await http.post(
+      uri,
+      headers: {"Content-Type":"application/json"},
+      body: jsonEncode({
+        "username":username,
+        "password":password,
+        "role":"Student"
+      })
+  );
+  if(response.statusCode == 200){
+    return true;
+  }else{
+    return false;
+  }
+}
 
 Future<int> CheckCredentials(String name, String password, String role) async{
 
-  final url=Uri.parse("$URL/login");
-  final data={"username":name,"password":password,"role":role};
-  var response=await http.post(url,
-  headers: {"Content-Type":"application/json"},
-      body:jsonEncode(data),
+  final uri=Uri.parse("$URL/login");
+  var response=await http.post(
+    uri,
+    headers: {"Content-Type":"application/json"},
+    body:jsonEncode({
+      "username":name,
+      "password":password,
+      "role":role
+    }),
   );
   return response.statusCode.toInt();
 }

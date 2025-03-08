@@ -20,10 +20,10 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   TextEditingController subjectCodeController = TextEditingController();
   String? selectedDepartment, selectedYear, selectedAcademicYear, selectedSemester ;
   var selectedFaculty;
-  List<String> academicYearList = [], semesterList = [], yearList = [];
+  List<dynamic> academicYearList = [], semesterList = [], yearList = [];
   final List<String> deptList = ["BCA", "BBA", "BCOM", "BSC"];
   late List<dynamic> facultyList=[];
-  bool isLoadingFaculty = false, isLoadingYear = false;
+  bool isLoadingFaculty = false, isLoadingYear = false, isLoadingAcademic = false, isLoadingSemester = false;
 
   void getSubjectOldDetails(String subName, String subCode, String subYear, String subDept) {
     subjectNameController = TextEditingController(text: subName);
@@ -35,6 +35,7 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   Future<void> FetchFacultyList() async {
     if (selectedDepartment == null) return;
     setState(() {
+      facultyList.clear();
       isLoadingFaculty = true;
     });
     final uri = Uri.parse(URL + "/fetchFacultyNameId");
@@ -57,20 +58,20 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   }
 
   Future<void> FetchYearList() async {
-    if (selectedAcademicYear == null) return;
+    if (selectedDepartment == null) return;
     setState(() {
       isLoadingYear= true;
     });
-    final uri = Uri.parse(URL + "fetchYearNameId");
+    final uri = Uri.parse(URL + "/fetchYearNameId");
     final response = await http.post(
         uri,
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"academic_year": selectedAcademicYear})
+        body: jsonEncode({"department": selectedDepartment})
     );
     if (response.statusCode == 200) {
       setState(() {
         yearList.clear();
-        yearList.addAll(List<String>.from(jsonDecode(response.body)));
+        yearList = json.decode(response.body);
         isLoadingYear = false;
       });
     } else {
@@ -84,14 +85,20 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
 
   @override
   void initState() {
-    super.initState();
     fetchAcademicYears();
+    super.initState();
   }
 
   Future<void> fetchAcademicYears() async {
-    List<String> years = await Modules.FetchAcademicYearList(); // Ensure this function returns List<String>
+
+    setState(() {
+      isLoadingAcademic= true;
+    });
+
+    List<dynamic> years = await Modules.FetchAcademicYearList();
     setState(() {
       academicYearList = years;
+      isLoadingAcademic = false;
     });
   }
 
@@ -123,60 +130,68 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                     subjectCodeController, TextInputType.number),
                 SizedBox(height: 25,),
 
+                DropdownButtonFormField<String>(
+                  value: selectedDepartment != "" ? selectedDepartment : null,
+                  decoration: InputDecoration(
+                      labelText: "Select Department",
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))
+                  ),
+                  items: deptList.map((deptValue){
+                    return DropdownMenuItem(
+                      value: deptValue,
+                      child: Text(deptValue),
+                    );
+                  }).toList(),
+                  onChanged: (value) async{
+                    setState(() {
+                      selectedDepartment=value.toString();
+                    });
+                    await FetchFacultyList();
+                    await FetchYearList();
+                  },
+                  validator: (value){
+                    if(value == null || value.isEmpty) return "Please select department";
+                    return null;
+                  },
+                ),
+                SizedBox(height: 25,),
+
+                isLoadingAcademic ? CircularProgressIndicator():
                 buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: selectedAcademicYear,
-                    onChanged: (value) { setState(() async {
+                    onChanged: (value) async{ setState(() {
                     selectedAcademicYear = value;
                     selectedSemester = null;
-                    FetchYearList();
+                  });
                     semesterList= await Modules.FetchSemesterList(value!) ;
-                  }); }),
+                },id_name: "academic_year_id", name: "academic_year"),
 
                 SizedBox(height: 25),
-                buildDropDownButton(labelText:  "Select Year", items: yearList, selectedValue: selectedYear, onChanged: (value) {
+                isLoadingAcademic ? CircularProgressIndicator():
+                buildDropDownButton(labelText:  "Select Year", items: yearList, selectedValue: selectedYear,
+                    onChanged: (value) {
                   setState(() {
                     selectedYear = value;
                   });
-                }),
+                },id_name: "class_id", name: "year"),
 
                 SizedBox(height: 25,),
-                buildDropDownButton(labelText:  "Select Semester", items: semesterList, selectedValue: selectedSemester, onChanged: (value){
-                  setState(() {
-                    selectedSemester = value;
-                  });
-                }),
-
-                SizedBox(height: 25,),
-                buildDropDownButton(labelText: "Select Department", items: deptList, selectedValue: selectedDepartment, onChanged: (value){
-                  setState(() {
-                    selectedDepartment = value;
-                    selectedFaculty = null;
-                    FetchFacultyList();
-                  });
-                }),
+                isLoadingAcademic ? CircularProgressIndicator():
+                buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue: selectedSemester,
+                    onChanged: (value){
+                      setState(() {
+                        selectedSemester = value;
+                      });
+                    }, id_name: "semester_id", name: "semester_number"),
 
                 SizedBox(height: 20,),
 
-                isLoadingFaculty ? CircularProgressIndicator(): DropdownButtonFormField(
-                  decoration: InputDecoration(labelText: "Select Faculty",
-                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))
-                  ),
-                    items: (facultyList ?? []).map((faculty){
-                      return DropdownMenuItem(
-                        value: faculty["faculty_id"],
-                          child: Text(faculty["faculty_name"])
-                      );
-                    }).toList(),
+                isLoadingFaculty ? CircularProgressIndicator():
+                buildDropDownButton(labelText: "Please select Faculty", items: facultyList, selectedValue: selectedFaculty,
                     onChanged: (value){
-                      setState(() {
-                        selectedFaculty = value;
-                      });
-                    },
-                  value: selectedFaculty,
-                  validator: (value){
-                      if(value == null ) return "Please select Faculty";
-                      return null;
-                  },
-                ),
+                          setState(() {
+                            selectedFaculty = value;
+                          });
+                        }, id_name: "faculty_id", name: "faculty_name"),
 
                 SizedBox(height: 25,),
                 ElevatedButton(
@@ -184,11 +199,11 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                       if (widget.option == "Add Subject") {
                         if(formKey.currentState!.validate()){
                           SaveSubject();
-                          Navigator.pop(context);
+                          //Navigator.pop(context);
                         }
                       } else if (widget.option == "Update Subject") {
                         UpdateSubject();
-                        Navigator.pop(context);
+                       // Navigator.pop(context);
                       }
                     },
                     child: widget.option == "Add Subject" ? Text("Add",
@@ -207,24 +222,25 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
     );
   }
 
-  Widget buildDropDownButton({required String labelText, required List<String> items,
-    required String? selectedValue,  required void Function(String?) onChanged}) {
+
+  Widget buildDropDownButton({required String labelText, required List<dynamic> items,
+    required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name, required String? name }) {
     return DropdownButtonFormField(
-      value: selectedValue,
-        validator: (value) {
-          if(value == null || value.isEmpty) return "Please select $labelText";
-          return null;
-        },
+      value: items.any((item) => item[id_name] == selectedValue) ? selectedValue ?? "" : null,
+      validator: (value) {
+        if(value == null) return "Please select $labelText";
+        return null;
+      },
       decoration: InputDecoration(
         labelText: labelText,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      items: items.map((String item){
-          return DropdownMenuItem<String>(
-              value: item,
-              child: Text(item,
-              ));
-        }).toList(),
+      items:  (items ?? []).map((dynamic item){
+        return DropdownMenuItem<dynamic>(
+            value: item[id_name].toString(),
+            child: Text(item[name].toString(),)
+        );
+      }).toList(),
       onChanged: onChanged,
     );
   }
@@ -241,7 +257,7 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
           "subject_name":subjectName,
           "subject_code":subjectCode,
           "subject_department":selectedDepartment,
-          "subject_year":selectedYear,
+          "class_id":selectedYear,
           "faculty_id":selectedFaculty,
           "academic_year_id": selectedAcademicYear,
           "semester_id": selectedSemester

@@ -5,8 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
-import 'package:online_ams/studentScreens/Camera.dart';
-import 'package:pinput/pinput.dart';
+import 'package:permission_handler/permission_handler.dart';
 
  class Modules {
 
@@ -118,7 +117,7 @@ import 'package:pinput/pinput.dart';
 
    // FUNCTION TO FETCH SUBJECT TABLE DATA
    static Future<List<dynamic>> FetchSubjectList(
-       {String? role, String? dept, String? year, int? faculty_id}) async {
+       {String? role, String? dept, String? year, int? faculty_id, String? semester_id}) async {
      final uri = Uri.parse(URL + "/fetchSubject");
      final response = await http.post(uri,
          headers: {"Content-Type": "application/json"},
@@ -232,7 +231,7 @@ import 'package:pinput/pinput.dart';
 
    static Future<dynamic> FetchAcademicYearList() async {
      final uri = Uri.parse(URL + "/fetchAcademicYear");
-     final response = await http.get(uri);
+     final response = await http.post(uri,headers: {"Content-Type": "application/json"},);
      if (response.statusCode == 200) {
          return jsonDecode(response.body);
      } else {

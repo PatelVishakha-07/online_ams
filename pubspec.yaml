@@ -42,6 +42,7 @@ dependencies:
   geolocator:
   pinput:
   face_camera:
+  permission_handler:
   image:
   camera:
   flutter:
