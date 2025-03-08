@@ -234,6 +234,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
 
   void showAttendanceReportDialog(BuildContext context) {
+    setState(() {
+      isLoadingAcademicYear = false; // Ensure it is not stuck in loading
+    });
+
     showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -252,6 +256,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     isLoadingSemester = true;
                   });
                   semesterList = await Modules.FetchSemesterList(selectedAcademicYear!);
+                  setState(() {
+                    isLoadingSemester = false;
+                  });
                 }, id_name: "academic_year_id", name: "academic_year", isLoading: isLoadingAcademicYear,),
 
               SizedBox(height: 20,),
@@ -268,9 +275,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     setState(() {
                       selectedSemester = value;
                     });
-                    subjectList = await Modules.FetchSubjectList(role: "Attendance Report", dept: stdDept,
+                    subjectList = await Modules.FetchSubjectList(role: "Attendance Report", dept: stdDept ?? "",
                         year: selectedYear, semester_id: selectedSemester);
-                  }, id_name: "semester_id", name: "semester_number"),
+                    setState(() {});
+                  }, id_name: "semester_id", name: "semester_number", isLoading: isLoadingSemester),
 
               SizedBox(height: 20,),
               buildDropDownButton(labelText: "Select Subject", items: subjectList, selectedValue: selectedSubject,
@@ -280,9 +288,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     });
                   }, id_name: "subject_id", name: "sub_name"),
               SizedBox(height: 20,),
-              buildDateField(fromDateController, "From ", Icons.today, fromDate!),
+              buildDateField(fromDateController, "From ", Icons.today, "from"),
               SizedBox(height: 20,),
-              buildDateField(toDateController, "To ", Icons.today, toDate!)
+              buildDateField(toDateController, "To ", Icons.today, "to")
             ],
           ),
           actions: [
@@ -293,13 +301,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 onPressed: (){
 
                   String? selectedSubjectName = subjectList.firstWhere((subject) => subject["subject_id"] == selectedSubject,
-                      orElse: () => {"sub_name": null} )["sub_name"];
+                      orElse: () => {"sub_name": "Unknown Subject"} )["sub_name"];
 
                   String? selectedSemesterNo = semesterList.firstWhere((semester) => semester["semester_id"] == selectedSemester,
-                      orElse: () => {"semester_number": null} )["semester_number"];
+                      orElse: () => {"semester_number": "Unknown Semester"} )["semester_number"];
 
                   String? selectedYearName = yearList.firstWhere((yearValues) => yearValues["class_id"] == selectedYear,
-                      orElse: () => {"year": null} )["year"];
+                      orElse: () => {"year": "Unknown Year"} )["year"];
 
                   Navigator.pop(context);
                   Navigator.push(context, MaterialPageRoute(builder: (context) =>
@@ -326,9 +334,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         labelText: labelText,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
-      items: isLoading
-          ? []
-          : (items ?? []).map((dynamic item){
+      items: isLoading || items.isEmpty
+          ? [DropdownMenuItem(child: Text("Loading..."), value: "")]
+          : items.map((dynamic item){
         return DropdownMenuItem<dynamic>(
             value: item[id_name].toString(),
             child: Text(item[name].toString(),)
@@ -355,7 +363,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
   }
 
-  Future<void> SelectDate(BuildContext context,  String variable, TextEditingController controller) async{
+  Future<void> SelectDate(BuildContext context,  String type, TextEditingController controller) async{
     DateTime? dateSelected= await showDatePicker(
       context: context,
       firstDate: DateTime(1900),
@@ -364,7 +372,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     );
     if(dateSelected != null){
       setState(() {
-        variable=dateSelected.toString();
+        String formattedDate = DateFormat('yyyy-MM-dd').format(dateSelected);
+        if(type == "from"){
+          fromDate=formattedDate.toString();
+        }else{
+          toDate = formattedDate.toString();
+        }
         controller.text=DateFormat('yyyy-MM-dd').format(dateSelected);
       });
     }

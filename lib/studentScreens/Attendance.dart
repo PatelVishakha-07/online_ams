@@ -125,6 +125,7 @@ class Attendance{
                                   if(value == null){
                                     return "Select Subject";
                                   }
+                                  return null;
                                 },
                                 decoration: const InputDecoration(labelText: "Select Subject"),
                               ),
@@ -135,6 +136,7 @@ class Attendance{
                                   if(value!.isEmpty || value == null){
                                     return "Enter the Code";
                                   }
+                                  return null;
                                 },
                                 controller: codeController,
                                 length: 4,
@@ -192,10 +194,27 @@ class Attendance{
         "academic_year_id":academic_year_id
       })
     );
-    if(response.statusCode == 200){
-      Navigator.pop(context,"Marked");
-    }else{
-      Navigator.pop(context,"Not Marked");
+    return response.statusCode == 200 ? "Marked" : "Not Marked";
+  }
+
+  static Future<void> MarkAbsentees(
+      {String? faculty_id, String? class_id, String? division_id, String? subject_id}) async{
+    final uri = Uri.parse(URL+"/markAttendance");
+    final response = await http.post(
+        uri,
+        headers: {"Content-Type":"application/json"},
+        body: jsonEncode({
+          "faculty_id": faculty_id,
+          "class_id": class_id,
+          "division_id": division_id,
+          "subject_id": subject_id
+        })
+    );
+    if (response.statusCode == 200) {
+      print("Absentees marked successfully");
+    } else {
+      print("Failed to mark absentees");
     }
   }
+
 }

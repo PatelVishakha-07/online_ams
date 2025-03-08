@@ -5,6 +5,7 @@ import 'package:online_ams/Modules.dart' ;
 import 'package:flutter/material.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
+import 'package:online_ams/studentScreens/Attendance.dart';
 
 class OTPScreen extends StatefulWidget {
   final int faculty_id;
@@ -159,7 +160,8 @@ class _OTPScrState extends State<OTPScreen> {
                       onPressed: () async{
                         String otp_code = GenerateOtp();
                         String created_at = DateTime.now().toString();
-                        String expiry_time = DateTime.now().add(Duration(minutes: int.parse(validTimeController.text))).toString();
+                        int validMinutes = int.parse(validTimeController.text.toString());
+                        String expiry_time = DateTime.now().add(Duration(minutes: validMinutes)).toString();
                         Position? facultyLocation = await Modules.GetCurrentLocation();
                         double faculty_latitude = facultyLocation!.latitude;
                         double faculty_longitude = facultyLocation!.longitude;
@@ -168,6 +170,13 @@ class _OTPScrState extends State<OTPScreen> {
                         Modules.SaveOtp(context, otp_code, int.parse(selectedYear!), widget.faculty_id, int.parse(selectedDivision!), created_at,
                            expiry_time, int.parse(selectedSubject!),faculty_latitude.toString(),faculty_longitude.toString(),areaSize);
                         showOtpDialog(otp_code);
+
+                        // Schedule markAbsentees API call after valid Minutes
+                        Future.delayed(Duration(minutes: validMinutes), () {
+                          Attendance.MarkAbsentees(faculty_id: widget.faculty_id.toString(), class_id:  selectedYear,
+                               division_id: selectedDivision, subject_id: selectedSubject);
+                        });
+
                       },
                       child: Text("Submit",style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 23),),
                       style: ElevatedButton.styleFrom(
@@ -229,6 +238,8 @@ class _OTPScrState extends State<OTPScreen> {
           );
     });
   }
+
+
 
   Widget buildDropDownButton({required String labelText, required List<dynamic> items, required IconData icon,
     required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name, required String? name }) {

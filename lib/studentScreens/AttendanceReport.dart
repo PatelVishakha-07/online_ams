@@ -23,7 +23,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
   bool isLoading = true, hasError = false;
 
   Future<void> FetchAttendanceReport() async{
-    final uri = Uri.parse(URL + "/fetchAttendaceReport");
+    final uri = Uri.parse(URL + "/fetchAttendanceReport");
     final response = await http.post(
         uri,
       headers: {"Content-Type":"application/json"},
@@ -67,6 +67,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
       body: isLoading
           ? Center(child: CircularProgressIndicator()) : hasError
           ? Center(child: Text("Error fetching data. Please try again."))
+          : attendanceData.isEmpty
+          ? Center(child: Text("No attendance records found."))
           : Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -82,7 +84,7 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("📚 Subject: ${widget.subName}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text("📅 Date: ${widget.from_date}} to ${widget.to_date}", style: TextStyle(fontSize: 14)),
+                    Text("📅 Date: ${widget.from_date} to ${widget.to_date}", style: TextStyle(fontSize: 14)),
                     Text("🏫 Semester: ${widget.semesterNo} | Year: ${widget.year}", style: TextStyle(fontSize: 14)),
                   ],
                 ),
