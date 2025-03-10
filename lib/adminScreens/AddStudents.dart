@@ -30,7 +30,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   String? studentClass ="", studentDivision="", studentDepartment="", studentSemester="", studentAcademicYear="";
   DateTime? studentDob;
   late List<dynamic> yearList = [], divisionList = [], semesterList = [], academicYearList = [];
-  bool isLoadingYear = false, isLoadingDivision = false, isLoadingSemester = false, isLoadingAcademicYear = false;
+  bool isLoadingYear = false, isLoadingDivision = false, isLoadingSemester = false, isLoadingAcademicYear = false, isUploading = false;
 
   final List<String> deptList =["BCA","BBA","BCOM","BSC","MSC","MCOM"];
 
@@ -84,10 +84,13 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     }
   }
 
-  Future<void> FetchSemesters() async {
+  Future<void> FetchSemesters(String academic_year) async {
     setState(() => isLoadingSemester = true);
     final uri = Uri.parse("$URL/fetchSemesters");
-    final response = await http.post(uri, headers: {"Content-Type": "application/json"});
+    final response = await http.post(uri, 
+        headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"academic_year_id":academic_year})
+    );
     setState(() {
       if (response.statusCode == 200) {
         semesterList = json.decode(response.body);
@@ -161,10 +164,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Colors.black45),
                           ),
-                          if(filename != null)...[
-                            SizedBox(height: 10,),
-                            Text("Total Records: 150")
-                          ]
                         ],
                       ),
                     ),
@@ -172,12 +171,12 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   ),
                 ),
                 SizedBox(height: 20,),
-                if(selectedFile != null)
-                  ElevatedButton(
-                      onPressed: (){
-                        uploadExcelFile();
-                      },
-                      child: Text("Upload and Save File")
+                if (selectedFile != null)
+                  isUploading
+                      ? Center(child: CircularProgressIndicator())
+                      : ElevatedButton(
+                    onPressed: uploadExcelFile,
+                    child: Text("Upload and Save File"),
                   )
               ]
             ],
@@ -218,6 +217,12 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
     if(response.statusCode == 200){
       if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data inserted successfully")));
+      studentFirstNameController.clear();
+      studentMiddleNameController.clear();
+      studentLastNameController.clear();
+      studentDobController.clear();
+      studentContactNoController.clear();
+      studentRollNoController.clear();
     }else{
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to insert data")));
     }
@@ -289,7 +294,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             setState(() {
                 studentClass = value.toString();
                 FetchDivision();
-                FetchSemesters();
                 FetchAcademicYears();
               });}, id_name: "class_id",name: "year"),
 
@@ -305,6 +309,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           buildDropDownButton(labelText: "Select Academic Year", items:  academicYearList, selectedValue:  studentAcademicYear,
               onChanged: (value) { setState(() {
                 studentAcademicYear = value.toString();
+                FetchSemesters(studentAcademicYear.toString());
               });}, id_name: "academic_year_id", name: "academic_year"),
 
           SizedBox(height: 20,),
@@ -425,12 +430,22 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
   Future<void> uploadExcelFile() async{
     if(selectedFile == null) return;
+
+    setState(() {
+      isUploading = true;
+    });
+
     var request = http.MultipartRequest(
       'POST',
       Uri.parse(URL+"/upload")
     );
     request.files.add(await http.MultipartFile.fromPath('file', selectedFile!.path));
     var response = await request.send();
+
+    setState(() {
+      isUploading = false;
+    });
+
     if(response.statusCode == 200 ){
       setState(() {
         filename=null;

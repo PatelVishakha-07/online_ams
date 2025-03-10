@@ -23,6 +23,7 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
 
   XFile? capturedImage;
   final ImagePicker imagePicker = ImagePicker();
+  bool isLoading = false;
 
   Future<void> CaptureImage() async{
 
@@ -41,8 +42,9 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
     if(pickedFile != null){
       setState(() {
         capturedImage = pickedFile;
-        DetectFace();
+        isLoading = true;
       });
+      DetectFace();
     }
   }
 
@@ -59,6 +61,7 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
       });
     }else {
       setState(() {
+        isLoading = false;
         Navigator.pop(context);
       });
     }
@@ -75,10 +78,12 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
     final response = await request.send();
     if(response.statusCode == 200){
       setState(() {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: widget.username)));
+        isLoading = false;
       });
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: widget.username)));
     }else {
       setState(() {
+        isLoading = false;
         Navigator.pop(context);
       });
     }
@@ -92,7 +97,17 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold();
+    return Scaffold(
+      body:Stack(
+        children: [
+          Center(
+            child: isLoading
+                ? CircularProgressIndicator()
+                : SizedBox.shrink(),
+          ),
+        ],
+      ),
+    );
   }
 }
 
