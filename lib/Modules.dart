@@ -125,7 +125,8 @@ import 'package:permission_handler/permission_handler.dart';
            "role": role,
            "department": dept,
            "year": year,
-           "faculty_id": faculty_id
+           "faculty_id": faculty_id,
+           "semester_id":semester_id
          })
      );
 

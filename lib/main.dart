@@ -47,7 +47,26 @@ class _LoginScreen extends State<LoginScreen> {
     String username=usernameController.text.toString();
     String password=passwordController.text.toString();
 
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissing dialog
+      builder: (context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 10),
+              Text("Logging in..."),
+            ],
+          ),
+        );
+      },
+    );
+
+
     if(selectedRole=="Admin"){
+      Navigator.pop(context);
       Navigator.push(context, MaterialPageRoute(builder: (context)=>AdminScreen()));
       /*
         int statusCode= await CheckCredentials(username,password,selectedRole);
@@ -63,16 +82,19 @@ class _LoginScreen extends State<LoginScreen> {
       if(statusCode == 200){
         if(selectedRole == "Student"){
           var value = await FetchImage(username, password);
+          Navigator.pop(context);
           if(value){
             Navigator.push(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: username,)));
           }else{
             Navigator.push(context, MaterialPageRoute(builder: (context) => StudentCameraScreen(username: username,)));
           }
         }else if(selectedRole == "Faculty") {
+          Navigator.pop(context);
           Navigator.push(context, MaterialPageRoute(
               builder: (context) => FacultyHomeScreen(username: username)));
         }
       }else{
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invalid Credentials")));
       }
     }

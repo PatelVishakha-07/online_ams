@@ -125,7 +125,7 @@ class _FacultyListScreenState extends State<FacultyListScreen> {
             ),
           ),
           Expanded(
-              child: filteredFaculty.isEmpty ? Center(child: Text("No students found")) :
+              child: filteredFaculty.isEmpty ? Center(child: Text("No Faculty found")) :
               ListView.builder(
                   itemCount: filteredFaculty.length,
                   itemBuilder: (context,index){

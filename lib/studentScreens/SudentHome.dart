@@ -30,7 +30,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   String? classId, divId, semester_id, academic_year_id;
   late List<dynamic> subjectList =[], semesterList =[], yearList=[], academicYearList=[];
   bool isLoadingYear = false, isLoadingSemester = false, isLoadingAcademicYear = false,  isLoading = false;
-  String? selectedSubject, fromDate = "", toDate ="", selectedSemester, selectedYear, selectedAcademicYear;
+  String? selectedSubject, fromDate = "", toDate ="", selectedSemester = "", selectedYear = "", selectedAcademicYear = "";
   TextEditingController fromDateController = TextEditingController(), toDateController = TextEditingController();
 
   void FetchDetails() async{
@@ -235,90 +235,136 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
   void showAttendanceReportDialog(BuildContext context) {
     setState(() {
-      isLoadingAcademicYear = false; // Ensure it is not stuck in loading
+      isLoadingAcademicYear = false;
     });
 
     showDialog(
+        barrierDismissible: false,
         context: context,
-        builder: (context) => AlertDialog(
-          elevation: 4,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          title: Text("Fill Details to View Report"),
-          icon: Icon(Icons.document_scanner),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+        builder: (context) {
+          return StatefulBuilder(
+              builder: (context, setState){
+                return AlertDialog(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  title: Text("Fill Details to View Report"),
+                  icon: Icon(Icons.document_scanner),
+                  content: SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
 
-              buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: selectedAcademicYear,
-                onChanged: (value) async{
-                  setState(() {
-                    selectedAcademicYear = value;
-                    isLoadingSemester = true;
-                  });
-                  semesterList = await Modules.FetchSemesterList(selectedAcademicYear!);
-                  setState(() {
-                    isLoadingSemester = false;
-                  });
-                }, id_name: "academic_year_id", name: "academic_year", isLoading: isLoadingAcademicYear,),
+                        buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: selectedAcademicYear,
+                          onChanged: (value) async{
+                            setState(() {
+                              selectedAcademicYear = value;
+                              selectedYear = null;  // Reset year selection
+                              selectedSemester = null;  // Reset semester selection
+                              selectedSubject = null;  // Reset subject selection
+                              semesterList = []; // Clear old data
+                              subjectList = [];
+                              isLoadingSemester = true;
+                            });
+                            List newSemesterList = await Modules.FetchSemesterList(selectedAcademicYear!);
+                            setState(() {
+                              semesterList = newSemesterList.toSet().toList();
+                              selectedSemester = null;  // Reset semester AFTER loading
+                              isLoadingSemester = false;
 
-              SizedBox(height: 20,),
-              buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: selectedYear,
-                  onChanged: (value) async{
-                    setState(() {
-                      selectedYear = value;
-                    });
-                  }, id_name: "class_id", name: "year"),
+                              if (!semesterList.any((item) => item["semester_id"] == selectedSemester)) {
+                                selectedSemester = null;
+                              }
 
-              SizedBox(height: 20,),
-              buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue: selectedSemester,
-                  onChanged: (value) async{
-                    setState(() {
-                      selectedSemester = value;
-                    });
-                    subjectList = await Modules.FetchSubjectList(role: "Attendance Report", dept: stdDept ?? "",
-                        year: selectedYear, semester_id: selectedSemester);
-                    setState(() {});
-                  }, id_name: "semester_id", name: "semester_number", isLoading: isLoadingSemester),
+                            });
+                          }, id_name: "academic_year_id", name: "academic_year", isLoading: isLoadingAcademicYear,),
 
-              SizedBox(height: 20,),
-              buildDropDownButton(labelText: "Select Subject", items: subjectList, selectedValue: selectedSubject,
-                  onChanged: (value) async{
-                    setState(() {
-                      selectedSubject = value;
-                    });
-                  }, id_name: "subject_id", name: "sub_name"),
-              SizedBox(height: 20,),
-              buildDateField(fromDateController, "From ", Icons.today, "from"),
-              SizedBox(height: 20,),
-              buildDateField(toDateController, "To ", Icons.today, "to")
-            ],
-          ),
-          actions: [
-            TextButton(onPressed: () => Navigator.pop(context),
-                child: Text("Cancel")),
+                        SizedBox(height: 20,),
+                        buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: selectedYear,
+                            onChanged: (value) async{
+                              setState(() {
+                                selectedYear = value;
+                                selectedSemester = null; // Reset semester
+                                selectedSubject = null; // Reset subject
+                                semesterList = [];
+                                subjectList = [];
+                              });
+                            }, id_name: "class_id", name: "year"),
 
-            TextButton(
-                onPressed: (){
+                        SizedBox(height: 20,),
+                        buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue: selectedSemester,
+                            onChanged: (value) async{
+                              setState(() {
+                                selectedSemester = value;
+                                selectedSubject = null;
+                                subjectList = [];
+                              });
+                              List newSubjectList = await Modules.FetchSubjectList(role: "Attendance Report", dept: stdDept ?? "",
+                                  year: selectedYear, semester_id: selectedSemester);
+                              setState(() {
+                                subjectList = newSubjectList.toSet().toList();
+                                selectedSubject = value;
+                                if (!subjectList.any((item) => item["subject_id"] == selectedSubject)) {
+                                  selectedSubject = null;
+                                }
+                              });
+                            }, id_name: "semester_id", name: "semester_number", isLoading: isLoadingSemester),
 
-                  String? selectedSubjectName = subjectList.firstWhere((subject) => subject["subject_id"] == selectedSubject,
-                      orElse: () => {"sub_name": "Unknown Subject"} )["sub_name"];
+                        SizedBox(height: 20,),
+                        buildDropDownButton(labelText: "Select Subject", items: subjectList, selectedValue: selectedSubject,
+                            onChanged: (value) async{
+                              setState(() {
+                                selectedSubject = value;
+                              });
+                            }, id_name: "subject_id", name: "sub_name"),
+                        SizedBox(height: 20,),
+                        buildDateField(fromDateController, "From ", Icons.today, "from"),
+                        SizedBox(height: 20,),
+                        buildDateField(toDateController, "To ", Icons.today, "to")
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(context),
+                        child: Text("Cancel")),
 
-                  String? selectedSemesterNo = semesterList.firstWhere((semester) => semester["semester_id"] == selectedSemester,
-                      orElse: () => {"semester_number": "Unknown Semester"} )["semester_number"];
+                    TextButton(
+                        onPressed: (){
 
-                  String? selectedYearName = yearList.firstWhere((yearValues) => yearValues["class_id"] == selectedYear,
-                      orElse: () => {"year": "Unknown Year"} )["year"];
+                          String selectedSubjectName = "", selectedYearName = "", selectedSemesterNo = "";
+                          subjectList.forEach((e) {
+                            if (e["subject_id"].toString() == selectedSubject) {
+                              selectedSubjectName = e["sub_name"];
+                            }
+                          });
 
-                  Navigator.pop(context);
-                  Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                  AttendanceReportScreen(subName: selectedSubjectName!, student_id: student_id.toString(), subject_id: selectedSubject.toString(),
-                      year:selectedYearName!, semesterNo: selectedSemesterNo!, class_id: selectedYear.toString(),
-                      semester_id: selectedSemester.toString(), from_date: fromDate.toString(), to_date: toDate.toString())));
-                },
-                child: Text("Submit")
-            )
-          ],
-        )
+                          yearList.forEach((e) {
+                            if (e["class_id"].toString() == selectedYear) {  // Ensure correct year selection
+                              selectedYearName = e["year"];
+                            }
+                          });
+
+                          semesterList.forEach((e) {
+                            if (e["semester_id"].toString() == selectedSemester) {  // Ensure correct semester selection
+                              selectedSemesterNo = e["semester_number"].toString();
+                            }
+                          });
+
+
+
+                          Navigator.pop(context);
+                          Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                              AttendanceReportScreen(subName: selectedSubjectName.toString(), student_id: student_id.toString(),
+                                  subject_id: selectedSubject.toString(), year:selectedYearName.toString(), semesterNo: selectedSemesterNo.toString(),
+                                  class_id: selectedYear.toString(), semester_id: selectedSemester.toString(),
+                                  from_date: fromDate.toString(), to_date: toDate.toString())));
+                        },
+                        child: Text("Submit")
+                    )
+                  ],
+                );
+          });
+        }
     );
   }
 

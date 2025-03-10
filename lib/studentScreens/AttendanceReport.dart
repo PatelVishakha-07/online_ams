@@ -17,9 +17,7 @@ class AttendanceReportScreen extends StatefulWidget {
 
 class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
 
-  String? subName, semesterNo, year;
   List<dynamic> attendanceData = [];
-
   bool isLoading = true, hasError = false;
 
   Future<void> FetchAttendanceReport() async{
@@ -33,7 +31,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
           "class_id":widget.class_id,
           "from_date":widget.from_date,
           "to_date":widget.to_date,
-          "student_id":widget.student_id
+          "student_id":widget.student_id,
+          "role":"Student"
     })
     );
     if(response.statusCode == 200){
@@ -48,7 +47,12 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
         isLoading = false;
       });
     }
+  }
 
+  @override
+  void initState() {
+    super.initState();
+    FetchAttendanceReport();
   }
 
   @override
@@ -84,7 +88,8 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text("📚 Subject: ${widget.subName}", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    Text("📅 Date: ${widget.from_date} to ${widget.to_date}", style: TextStyle(fontSize: 14)),
+                    Text(widget.to_date != null ? "📅 Date: ${widget.from_date} to ${widget.to_date}"
+                        : "📅 Date: ${widget.from_date}", style: TextStyle(fontSize: 14),),
                     Text("🏫 Semester: ${widget.semesterNo} | Year: ${widget.year}", style: TextStyle(fontSize: 14)),
                   ],
                 ),

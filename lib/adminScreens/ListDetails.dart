@@ -40,7 +40,7 @@ class DepartmentListScreen extends StatefulWidget {
 }
 
 class _DepartmentListScreenState extends State<DepartmentListScreen> {
-  final List<String> dept =["BCA","BBA","BCOM","BSC"];
+  final List<String> dept =["BCA","BBA","BCOM","BSC","MCOM","MSC"];
 
   @override
   Widget build(BuildContext context) {
@@ -169,14 +169,25 @@ class _Class_DivisionListScreenState extends State<Class_DivisionListScreen> {
                                         child: Text("Delete"),
                                       ),
                                     ],
-                                    onSelected: (value){
+                                    onSelected: (value) async{
                                       if(value == "update"){
-                                        showClassAlertDialog(context, widget.department, "Update Class", "Update",
+                                        bool classUpdated = await showClassAlertDialog(context, widget.department, "Update Class", "Update",
                                             oldYear: item["year"],oldDiv: item["division"]);
+                                        print("-------------------------$classUpdated");
+                                        if(classUpdated){
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Record Updated Successfully")));
+                                          setState(() {
+                                            classData = Modules.FetchData("Class", dept: widget.department);
+                                          });
+                                        }else{
+                                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Update Record")));
+                                        }
                                       }
                                       else if(value == "delete"){
                                         Modules.DeleteData(context, option: "Class", class_id: item["class_id"].toString(), division_id: item["division_id"].toString());
-                                        setState(() {});
+                                        setState(() {
+                                          classData = Modules.FetchData("Class", dept: widget.department);
+                                        });
                                       }
                                     },
                                   )
@@ -222,11 +233,13 @@ class _Class_DivisionListScreenState extends State<Class_DivisionListScreen> {
         Padding(
           padding: const EdgeInsets.only(left: 320,bottom: 25),
           child: FloatingActionButton(
-            onPressed: (){
-              showClassAlertDialog(context,widget.department,"Create Class","Create");
-              setState(() {
-                classData = Modules.FetchData("Class", dept: widget.department);
-              });
+            onPressed: () async{
+              bool classCreated = await showClassAlertDialog(context,widget.department,"Create Class","Create");
+              if(classCreated){
+                setState(() {
+                  classData = Modules.FetchData("Class", dept: widget.department);
+                });
+              }
             },
             child: Icon(Icons.add,size: 40,),
             elevation: 3,
@@ -238,7 +251,7 @@ class _Class_DivisionListScreenState extends State<Class_DivisionListScreen> {
   }
 }
 
-void showClassAlertDialog(BuildContext context, String dept, String titleText, String actionText, {String oldYear="",String oldDiv=""}) {
+Future<bool> showClassAlertDialog(BuildContext context, String dept, String titleText, String actionText, {String oldYear="",String oldDiv=""}) {
   String? selectedClass;
   String? selectedDivision;
   List<String> year=["FY","SY","TY"];
@@ -249,10 +262,10 @@ void showClassAlertDialog(BuildContext context, String dept, String titleText, S
     selectedDivision=oldDiv;
   }
 
-  Future<void> sendDataToAPI(String choice) async{
+  Future<bool> sendDataToAPI(String choice) async{
     if(selectedClass == null ||  selectedDivision == null){
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Please Select all fields")));
-      return;
+      return false;
     }
     String api="";
     if(choice == "Update Class"){
@@ -274,12 +287,14 @@ void showClassAlertDialog(BuildContext context, String dept, String titleText, S
 
     if(response.statusCode == 200){
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Class Created Successfully")));
+      return true;
     }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Create Class")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Class Already Exists")));
+      return false;
     }
   }
 
-  showDialog(
+  return showDialog(
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -333,15 +348,15 @@ void showClassAlertDialog(BuildContext context, String dept, String titleText, S
                 actions: [
                   TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pop(context,false);
                       },
                       child: Text("Cancel")
                   ),
                   ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async{
                         if(titleText == "Create Class"){
-                          sendDataToAPI(titleText);
-                          Navigator.pop(context);
+                          bool success = await sendDataToAPI(titleText);
+                          Navigator.pop(context,success);
                         }else if( titleText == "Update Class"){
                           UpdateClassDivsion(context, dept, selectedClass, selectedDivision, oldYear, oldDiv);
                           Navigator.pop(context);
@@ -354,10 +369,10 @@ void showClassAlertDialog(BuildContext context, String dept, String titleText, S
             }
         );
       }
-  );
+  ).then((value) => value ?? false);
 }
 
-Future<void> UpdateClassDivsion(BuildContext context, String dept,String? year, String? division, String oldYear, String oldDiv) async{
+Future<bool> UpdateClassDivsion(BuildContext context, String dept,String? year, String? division, String oldYear, String oldDiv) async{
   final uri=Uri.parse(URL+"/updateClassData");
   final response=await http.post(
     uri,
@@ -370,13 +385,10 @@ Future<void> UpdateClassDivsion(BuildContext context, String dept,String? year, 
         "old_division":oldDiv
       })
   );
-  if (!context.mounted) return;
   if(response.statusCode == 200){
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Record Updated Successfully")));
+    return true;
   }else{
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Update Record")));
+    return false;
   }
 }
 

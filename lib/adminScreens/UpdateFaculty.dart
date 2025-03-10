@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
@@ -28,9 +29,11 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
   String? facultyDept;
   String oldFirstName="", oldLastName="", oldMiddleName="";
   DateTime? dob;
+  bool isLoading = false;
   final List<String> dept=["BCA","BBA","BCOM","BSC","MCOM","MSC"];
 
   Future<void> FetchOldData() async{
+    setState(() => isLoading = true);
     final uri=Uri.parse(URL+"/fetchSingleRecord");
     final response=await http.post(
         uri,
@@ -50,16 +53,27 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
     }else{
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to load Data")));
     }
+    setState(() => isLoading = false);
   }
 
   void UpdateFacultyFields() {
     var faculty = facultyData.firstWhere((e) => e["faculty_id"] == widget.faculty_id, orElse: () => null);
     if(faculty != null){
-      String fullName = faculty["name"];
-      List<String> nameParts=fullName.split(" ");
+      String fullName = faculty["faculty_name"] ?? "";
+      List<String> nameParts=fullName.trim().split(RegExp(r'\s+'));
       oldFirstName=nameParts[0];
-      oldMiddleName=nameParts.length > 2 ? nameParts[1]:"";
-      oldLastName=nameParts.length > 2 ? nameParts[2] : nameParts[1];
+
+      if (nameParts.length == 3) {
+        oldMiddleName = nameParts[1];
+        oldLastName = nameParts[2];
+      } else if (nameParts.length == 2) {
+        oldMiddleName = "";
+        oldLastName = nameParts[1];
+      } else {
+        oldMiddleName = "";
+        oldLastName = "";
+      }
+
       facultyFirstNameController.text = oldFirstName;
       facultyMiddleNameController.text = oldMiddleName;
       facultyLastNameController.text = oldLastName;
@@ -87,10 +101,12 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
         backgroundColor: Colors.pink[50],
       ),
       backgroundColor: Colors.pink[50],
-      body: SingleChildScrollView(
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: buildAddSingleRecord(),
-      )
+      ),
     );
   }
 
@@ -106,7 +122,8 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
           SizedBox(height: 20,),
           buildTextFormField("Enter Last Name",Icons.person,facultyLastNameController),
           SizedBox(height: 20,),
-          buildTextFormField("Enter Contact Number",Icons.contact_page,facultyContactNoController),
+          buildTextFormField("Enter Contact Number",Icons.contact_page,facultyContactNoController, keyboardType: TextInputType.phone,
+          maxLength: 10),
 
           SizedBox(height: 20,),
           DropdownButtonFormField<String>(
@@ -155,15 +172,22 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
     );
   }
 
-  Widget buildTextFormField(String hintText,IconData icon,TextEditingController controller){
+  Widget buildTextFormField(String hintText,IconData icon,TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text, int? maxLength}){
     return  TextFormField(
       controller: controller,
+      maxLength: maxLength,
+      keyboardType: keyboardType,
+      inputFormatters: (keyboardType == TextInputType.phone)
+          ? [FilteringTextInputFormatter.digitsOnly] : null,
       decoration: InputDecoration(
         hintText: hintText,prefixIcon: Icon(icon),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        counterText: maxLength != null ? "" : null,
       ),
       validator: (value){
-        if (value == null || value.isEmpty) return "Please enter the value";
+        if (value == null || value.isEmpty) return hintText;
+        if (keyboardType == TextInputType.phone && value.length != 10) return "Contact number must be 10 digits";
         return null;
       },
     );

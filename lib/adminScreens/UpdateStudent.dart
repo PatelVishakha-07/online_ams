@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
@@ -63,12 +64,19 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
       setState(() {
 
         String fullName = student["name"];
-        List<String> nameParts=fullName.split(" ");
+        List<String> nameParts=fullName.trim().split(RegExp(r'\s+'));
         oldFirstName=nameParts[0];
-        oldMiddleName=nameParts.length > 2 ? nameParts[1]:"";
-        oldLastName=nameParts.length > 2 ? nameParts[2] : nameParts[1];
+        if (nameParts.length == 3) {
+          oldMiddleName = nameParts[1];
+          oldLastName = nameParts[2];
+        } else if (nameParts.length == 2) {
+          oldMiddleName = "";
+          oldLastName = nameParts[1];
+        } else {
+          oldMiddleName = "";
+          oldLastName = "";
+        }
 
-      // Updating existing controllers
         studentFirstNameController.text = oldFirstName;
         studentMiddleNameController.text = oldMiddleName;
         studentLastNameController.text = oldLastName;
@@ -129,7 +137,8 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
           buildTextFormField("Enter Last Name",Icons.person,studentLastNameController),
           SizedBox(height: 20,),
 
-          buildTextFormField("Enter Contact Number",Icons.contact_page,studentContactNoController,),
+          buildTextFormField("Enter Contact Number",Icons.contact_page,studentContactNoController,
+          keyboardType: TextInputType.phone, maxLength: 10),
 
           SizedBox(height: 20,),
           DropdownButtonFormField<String>(
@@ -176,8 +185,6 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
               selectedValue: studentSemester, onChanged: (value) { setState(() { studentSemester = value.toString(); }); },
               id_name: "semester_id", name: "semester"),
 
-          SizedBox(height: 20,),
-          buildTextFormField("Enter Roll number",Icons.confirmation_number_outlined,studentRollNoController),
           SizedBox(height: 20,),
           buildDobField(),
 
@@ -258,15 +265,22 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
     }
   }
 
-  Widget buildTextFormField(String hintText,IconData icon,TextEditingController controller){
+  Widget buildTextFormField(String hintText,IconData icon,TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text, int? maxLength}){
     return  TextFormField(
       controller: controller,
+      maxLength: maxLength,
+      keyboardType: keyboardType,
+      inputFormatters: (keyboardType == TextInputType.phone)
+          ? [FilteringTextInputFormatter.digitsOnly] : null,
       decoration: InputDecoration(
         hintText: hintText,prefixIcon: Icon(icon),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        counterText: maxLength != null ? "" : null,
       ),
       validator: (value){
-        if(value == null || value.isEmpty) return hintText;
+        if (value == null || value.isEmpty) return hintText;
+        if (keyboardType == TextInputType.phone && value.length != 10) return "Contact number must be 10 digits";
         return null;
       },
     );

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
@@ -252,7 +253,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           buildTextFormField("Enter Last Name",Icons.person,studentLastNameController),
           SizedBox(height: 20,),
 
-          buildTextFormField("Enter Contact Number",Icons.contact_page,studentContactNoController),
+          buildTextFormField("Enter Contact Number",Icons.contact_page,studentContactNoController,
+          keyboardType: TextInputType.phone, maxLength: 10),
 
           SizedBox(height: 20,),
           DropdownButtonFormField<String>(
@@ -365,20 +367,26 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     }
   }
 
-  Widget buildTextFormField(String hintText,IconData icon,TextEditingController controller){
+  Widget buildTextFormField(String hintText,IconData icon,TextEditingController controller,
+      {TextInputType keyboardType = TextInputType.text, int? maxLength}){
     return  TextFormField(
       controller: controller,
+      maxLength: maxLength,
+      keyboardType: keyboardType,
+      inputFormatters: (keyboardType == TextInputType.phone)
+          ? [FilteringTextInputFormatter.digitsOnly] : null,
       decoration: InputDecoration(
-          hintText: hintText,prefixIcon: Icon(icon),
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        hintText: hintText,prefixIcon: Icon(icon),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        counterText: maxLength != null ? "" : null,
       ),
       validator: (value){
-        if(value == null || value.isEmpty) return hintText;
+        if (value == null || value.isEmpty) return hintText;
+        if (keyboardType == TextInputType.phone && value.length != 10) return "Contact number must be 10 digits";
         return null;
       },
     );
   }
-
   Widget buildDropDownButton({required String labelText, required List<dynamic> items,
     required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name, required String? name }) {
     return DropdownButtonFormField(
