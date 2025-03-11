@@ -28,15 +28,14 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
 
   String? studentClass, studentDivision, studentDepartment, studentAcademicYear, studentSemester;
   String oldFirstName="", oldLastName="", oldMiddleName="";
-
   List<dynamic> studentData = [];
-
   DateTime? studentDob;
   final List<String> dept =["BCA","BBA","BCOM","BSC"];
-
   late List<dynamic> studentYearList = [], studentDivisionList = [], semesterList=[], academicYearList=[];
+  bool isLoading = false, isDataLoading = false;
 
   Future<void> FetchOldData() async{
+    setState(() => isDataLoading = true);
     final uri=Uri.parse(URL+"/fetchSingleRecord");
     final response=await http.post(
         uri,
@@ -54,8 +53,9 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
         UpdateStudentFields();
       }
     }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to load Data")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to load Student Data")));
     }
+    setState(() => isDataLoading = false);
   }
 
   void UpdateStudentFields() async{
@@ -117,7 +117,9 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
         backgroundColor: Colors.pink[50],
       ),
       backgroundColor: Colors.pink[50],
-      body: SingleChildScrollView(
+      body: isDataLoading
+          ? Center(child: CircularProgressIndicator())
+          :SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: buildAddSingleRecord(),
       ),
@@ -190,17 +192,29 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
 
           SizedBox(height: 20,),
           ElevatedButton(
-              onPressed: (){
+              onPressed: () async{
                 String name=studentFirstNameController.text.toString() + " " + studentMiddleNameController.text.toString()
                     + " " + studentLastNameController.text.toString();
                 String contact=studentContactNoController.text.toString();
                 String rollNo=studentRollNoController.text.toString();
                 String formattedDob=studentDob != null ? DateFormat('yyyy-MM-dd').format(studentDob!) : "";
 
-                Modules.updateStudentFacultyData(context, studentDepartment, name, contact, formattedDob, "Student",
+                setState(() {
+                  isLoading = true;
+                });
+                bool success = await Modules.updateStudentFacultyData(context, studentDepartment, name, contact, formattedDob, "Student",
                 division: studentDivision, year: studentClass, roll_no: rollNo, student_id: widget.student_id.toString(),
                 studentAcademicYear: studentAcademicYear, studentSemester: studentSemester);
-                Navigator.pop(context);
+
+                setState(() {
+                  isLoading = false;
+                });
+                if(success){
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Student data updated successfully!")));
+                  Future.delayed(Duration(seconds: 1), () {Navigator.pop(context);});
+                }else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update Student data. Try again!")));
+                }
               },
               child: Text("Update")
           )

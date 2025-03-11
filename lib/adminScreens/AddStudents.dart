@@ -30,7 +30,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   String? studentClass ="", studentDivision="", studentDepartment="", studentSemester="", studentAcademicYear="";
   DateTime? studentDob;
   late List<dynamic> yearList = [], divisionList = [], semesterList = [], academicYearList = [];
-  bool isLoadingYear = false, isLoadingDivision = false, isLoadingSemester = false, isLoadingAcademicYear = false, isUploading = false;
+  bool isLoadingYear = false, isLoadingDivision = false, isLoadingSemester = false, isLoadingAcademicYear = false,
+      isUploading = false, isLoading = false;
 
   final List<String> deptList =["BCA","BBA","BCOM","BSC","MSC","MCOM"];
 
@@ -186,7 +187,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     );
   }
 
-  Future<void> insertStudentData() async{
+  Future<bool> insertStudentData() async{
     String studentFirstName= studentFirstNameController.text.toString();
     String studentMiddleName=studentMiddleNameController.text.toString();
     String studentLastName=studentLastNameController.text.toString();
@@ -216,15 +217,15 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     );
 
     if(response.statusCode == 200){
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data inserted successfully")));
       studentFirstNameController.clear();
       studentMiddleNameController.clear();
       studentLastNameController.clear();
       studentDobController.clear();
       studentContactNoController.clear();
       studentRollNoController.clear();
+      return true;
     }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to insert data")));
+      return false;
     }
   }
 
@@ -327,13 +328,28 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
 
           SizedBox(height: 20,),
           ElevatedButton(
-              onPressed: (){
+              onPressed: () async{
                 if(formKey.currentState!.validate()){
-                  insertStudentData();
+                  setState(() {
+                    isLoading = true;
+                  });
+                  bool success = await insertStudentData();
+
+                  setState(() {
+                    isLoading = false;
+                  });
+                  if(success){
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Student added successfully!")));
+                    Future.delayed(Duration(seconds: 1), () {Navigator.pop(context);});
+                  }else {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add Student. Try again!")));
+                  }
                 }
                 //Navigator.pop(context);
               },
-              child: Text("Add")
+              child: isLoading
+                  ? CircularProgressIndicator(color: Colors.white)
+                  : Text("Add"),
           )
         ],
       ),

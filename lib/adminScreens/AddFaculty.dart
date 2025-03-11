@@ -28,6 +28,7 @@ class _AddFacultyScreenState extends State<AddFacultyScreen> {
   String? facultyDept;
   DateTime? dob;
   final List<String> dept=["BCA","BBA","BCOM","BSC","MCOM","MSC"];
+  bool isLoading = false, isUploading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -75,10 +76,6 @@ class _AddFacultyScreenState extends State<AddFacultyScreen> {
                             textAlign: TextAlign.center,
                             style: TextStyle(color: Colors.black45),
                           ),
-                          if(filename != null)...[
-                            SizedBox(height: 10,),
-                            Text("Total Records: 150")
-                          ]
                         ],
                       ),
                     ),
@@ -86,12 +83,12 @@ class _AddFacultyScreenState extends State<AddFacultyScreen> {
                   ),
                 ),
                 SizedBox(height: 20,),
-                if(selectedFile != null)
-                  ElevatedButton(
-                      onPressed: (){
-                        uploadExcelFile();
-                      },
-                      child: Text("Upload and Save File")
+                if (selectedFile != null)
+                  isUploading
+                      ? Center(child: CircularProgressIndicator())
+                      : ElevatedButton(
+                    onPressed: uploadExcelFile,
+                    child: Text("Upload and Save File"),
                   )
               ]
             ],
@@ -163,27 +160,39 @@ Widget buildAddSingleRecord(){
 
         SizedBox(height: 20,),
         ElevatedButton(
-            onPressed: (){
+            onPressed: () async{
               if (formKey.currentState!.validate()){
-                insertFacultyData();
-                
+                setState(() {
+                  isLoading = true;
+                });
+                bool success = await insertFacultyData();
+                setState(() {
+                  isLoading = false;
+                });
+                if(success){
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Faculty added successfully!")));
+                  Future.delayed(Duration(seconds: 1), () { Navigator.pop(context); });
+                }else {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add Faculty. Try again!")));
+                }
               }
             },
-            child: Text("Add")
+            child: isLoading
+                ? CircularProgressIndicator(color: Colors.white)
+                : Text("Add"),
         )
       ],
     ),
   );
 }
 
-Future<void> insertFacultyData() async{
+Future<bool> insertFacultyData() async{
     String facultyFirstName=facultyFirstNameController.text.toString();
     String facultyMiddleName=facultyMiddleNameController.text.toString();
     String facultyLastName=facultyLastNameController.text.toString();
     String facultyContactNo=facultyContactNoController.text.toString();
     String facultyDepartment=facultyDept.toString();
     String facultyDob=facultyDobController.text.toString();
-    print(facultyDob+" -------------------------------------");
     final uri=Uri.parse(URL+"/addSingleRecord");
     final response = await http.post(
       uri,
@@ -199,9 +208,15 @@ Future<void> insertFacultyData() async{
       })
     );
     if(response.statusCode == 200){
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Data inserted successfully")));
+      facultyFirstNameController.clear();
+      facultyMiddleNameController.clear();
+      facultyLastNameController.clear();
+      facultyContactNoController.clear();
+      facultyDobController.clear();
+      facultyDept = null;
+      return true;
     }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to insert data")));
+      return false;
     }
 }
 
@@ -273,6 +288,10 @@ Future<void> PickExcelFile() async {
 
 Future<void> uploadExcelFile() async {
     if (selectedFile == null) return;
+    setState(() {
+      isUploading = true;
+    });
+
     var request = http.MultipartRequest(
         'POST',
         Uri.parse(URL + "/upload")
@@ -280,17 +299,19 @@ Future<void> uploadExcelFile() async {
     request.files.add(
         await http.MultipartFile.fromPath('file', selectedFile!.path));
     var response = await request.send();
+    setState(() {
+      isUploading = false;
+    });
+
     if (response.statusCode == 200) {
       setState(() {
         filename = null;
         selectedFile = null;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("File Uploaded Successfully")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("File Uploaded Successfully")));
     }
     else {
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Upload Failed")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Upload Failed")));
     }
   }
   

@@ -199,7 +199,7 @@ class Attendance{
 
   static Future<void> MarkAbsentees(
       {String? faculty_id, String? class_id, String? division_id, String? subject_id}) async{
-    final uri = Uri.parse(URL+"/markAttendance");
+    final uri = Uri.parse(URL+"/markAbsentees");
     final response = await http.post(
         uri,
         headers: {"Content-Type":"application/json"},

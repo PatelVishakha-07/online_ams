@@ -3,10 +3,11 @@ import 'package:intl/intl.dart';
 import 'package:online_ams/adminScreens/AcademicSetup.dart';
 import 'package:online_ams/adminScreens/Faculty.dart';
 import 'package:online_ams/adminScreens/ListDetails.dart';
+import 'package:online_ams/adminScreens/Password.dart';
 import 'package:online_ams/adminScreens/Students.dart';
 import 'package:online_ams/adminScreens/Subject.dart';
 
-var URL="https://3ea3-2409-4080-948c-7c17-4547-b5b8-e12d-8337.ngrok-free.app";
+var URL="https://29cf-2409-4080-948c-7c17-41d9-c5f0-d375-2191.ngrok-free.app";
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -23,7 +24,7 @@ class _AdminScreenState extends State<AdminScreen> {
       {"Title":"Faculty", "Icon":Icons.person, "route": FacultyScreen()},
       {"Title":"Student", "Icon":Icons.people, "route": StudentScreen()},
       {"Title":"Subject", "Icon":Icons.subject_outlined, "route": SubjectScreen()},
-      {"Title":"Change Password", "Icon":Icons.lock_outline, "route": ""},
+      {"Title":"View Username", "Icon":Icons.lock_outline, "route": UsernameRoleScreen()},
     ];
 
   @override

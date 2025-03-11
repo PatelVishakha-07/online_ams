@@ -29,11 +29,11 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
   String? facultyDept;
   String oldFirstName="", oldLastName="", oldMiddleName="";
   DateTime? dob;
-  bool isLoading = false;
+  bool isDataLoading = false, isLoading = false;
   final List<String> dept=["BCA","BBA","BCOM","BSC","MCOM","MSC"];
 
   Future<void> FetchOldData() async{
-    setState(() => isLoading = true);
+    setState(() => isDataLoading = true);
     final uri=Uri.parse(URL+"/fetchSingleRecord");
     final response=await http.post(
         uri,
@@ -51,9 +51,9 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
         }
       });
     }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to load Data")));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to load Faculty Data")));
     }
-    setState(() => isLoading = false);
+    setState(() => isDataLoading = false);
   }
 
   void UpdateFacultyFields() {
@@ -101,7 +101,7 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
         backgroundColor: Colors.pink[50],
       ),
       backgroundColor: Colors.pink[50],
-      body: isLoading
+      body: isDataLoading
           ? Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
         scrollDirection: Axis.vertical,
@@ -155,14 +155,26 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
 
           SizedBox(height: 20,),
           ElevatedButton(
-              onPressed: (){
-                if (formKey.currentState!.validate()){
+              onPressed: () async{
+                if (formKey.currentState!.validate()) {
                   String name= "${facultyFirstNameController.text.toString()} ${facultyMiddleNameController.text.toString()} ${facultyLastNameController.text.toString()}";
                   String contact=facultyContactNoController.text.toString();
                   String formattedDate=dob != null ? DateFormat('yyyy-MM-dd').format(dob!): "";
 
-                  Modules.updateStudentFacultyData(context, facultyDept, name, contact, formattedDate, "Faculty",faculty_id: widget.faculty_id.toString());
-                  Navigator.pop(context);
+                  setState(() {
+                    isLoading = true;
+                  });
+                  bool success = await Modules.updateStudentFacultyData(context, facultyDept, name, contact, formattedDate, "Faculty",faculty_id: widget.faculty_id.toString());
+
+                  setState(() {
+                    isLoading = false;
+                  });
+                  if(success){
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Faculty data updated successfully!")));
+                    Future.delayed(Duration(seconds: 1), () {Navigator.pop(context);});
+                  }else {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update Faculty data. Try again!")));
+                  }
                 }
               },
               child: Text("Update")

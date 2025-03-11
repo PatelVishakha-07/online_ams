@@ -350,8 +350,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             }
                           });
 
-
-
                           Navigator.pop(context);
                           Navigator.push(context, MaterialPageRoute(builder: (context) =>
                               AttendanceReportScreen(subName: selectedSubjectName.toString(), student_id: student_id.toString(),

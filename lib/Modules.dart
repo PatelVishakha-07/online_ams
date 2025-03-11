@@ -52,7 +52,7 @@ import 'package:permission_handler/permission_handler.dart';
 
 
    // FUNCTION TO UPDATE STUDENT OR FACULTY DATA
-   static Future<void> updateStudentFacultyData(BuildContext context,
+   static Future<bool> updateStudentFacultyData(BuildContext context,
        String? dept, String name, String contact, String dob,
        String role,
        {String? roll_no, String? year, String? division, String? student_id, String? faculty_id,
@@ -77,11 +77,9 @@ import 'package:permission_handler/permission_handler.dart';
          })
      );
      if (response.statusCode == 200) {
-       ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text("Record Updated Successfully")));
+       return true;
      } else {
-       ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text("Failed to Update Record")));
+       return false;
      }
    }
 

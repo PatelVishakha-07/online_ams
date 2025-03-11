@@ -169,12 +169,17 @@ class _OTPScrState extends State<OTPScreen> {
 
                         Modules.SaveOtp(context, otp_code, int.parse(selectedYear!), widget.faculty_id, int.parse(selectedDivision!), created_at,
                            expiry_time, int.parse(selectedSubject!),faculty_latitude.toString(),faculty_longitude.toString(),areaSize);
+
                         showOtpDialog(otp_code);
 
                         // Schedule markAbsentees API call after valid Minutes
                         Future.delayed(Duration(minutes: validMinutes), () {
-                          Attendance.MarkAbsentees(faculty_id: widget.faculty_id.toString(), class_id:  selectedYear,
-                               division_id: selectedDivision, subject_id: selectedSubject);
+                          if(context.mounted){
+                            Future.microtask((){
+                              Attendance.MarkAbsentees(faculty_id: widget.faculty_id.toString(), class_id:  selectedYear,
+                                  division_id: selectedDivision, subject_id: selectedSubject);
+                            });
+                          }
                         });
 
                       },

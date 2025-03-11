@@ -168,7 +168,7 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
             child: TextField(
               controller: searchController,
               decoration: InputDecoration(
-                hintText: "Search Studnets...",
+                hintText: "Search Students...",
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
               ),
