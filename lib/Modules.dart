@@ -27,7 +27,7 @@ import 'package:permission_handler/permission_handler.dart';
      if (response.statusCode == 200) {
        return json.decode(response.body);
      } else {
-       throw Exception("Failed to Load $choice Details");
+       return [];
      }
    }
 
@@ -169,11 +169,9 @@ import 'package:permission_handler/permission_handler.dart';
          })
      );
      if (response.statusCode == 200) {
-       ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text("Record Deleted Successfully")));
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Record Deleted Successfully")));
      } else {
-       ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(content: Text("Failed to Delete Record")));
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Delete Record")));
      }
    }
 
@@ -184,6 +182,7 @@ import 'package:permission_handler/permission_handler.dart';
      serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
      if (!serviceEnabled) {
+       await Geolocator.openLocationSettings();
        return null;
      }
 

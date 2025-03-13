@@ -48,6 +48,7 @@ class Attendance{
           "subject_id":subject_id
         })
     );
+
     if(response.statusCode != 200){
       return "Invalid";
     }
@@ -81,8 +82,9 @@ class Attendance{
   // FUNCTION TO SHOW DIALOGBOX TO MARK ATTENDANCE FOR STUDENT
   static Future<Map> ShowMarkAttendanceDialog(BuildContext context, String student_id, String department, String year,
       String division_id, String class_id) async{
-    String? selectedSubject;
 
+    bool isLoading = false;
+    String? selectedSubject;
     final formKey = GlobalKey<FormState>();
 
     Future<List<dynamic>> subjectList = Modules.FetchSubjectList(dept: department, role: "Student", year: year);
@@ -161,15 +163,26 @@ class Attendance{
                       child: const Text("Cancel"),
                     ),
                     TextButton(
-                      onPressed: () async {
+                      onPressed: isLoading ? null :() async {
                         if(formKey.currentState!.validate()){
+                          setState((){
+                            isLoading = true;
+                          });
                           String otpCode = codeController.text.trim().toString();
                           String subject_id = selectedSubject.toString();
                           String msg = await ValidateOtp(context, otpCode, class_id, division_id, subject_id);
+                          setState(() {
+                            isLoading = false; // Stop loading
+                          });
                           Navigator.pop(context, {"msg":msg, "sub_id":subject_id ?? "0"});
                         }
                       },
-                      child: const Text("Submit"),
+                      child: isLoading
+                          ? SizedBox(
+                        height: 20, width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                          : Text("Submit"),
                     ),
                   ],
                 );

@@ -165,14 +165,14 @@ class _LoginScreen extends State<LoginScreen> {
                   SizedBox(height: 20),
 
                   if(selectedRole == "Admin")...[
-                    buildTextField("Enter Username", Icons.person, usernameController),
+                    buildTextField("Enter Username", Icons.person, usernameController, keyboardType: TextInputType.text),
                     SizedBox(height: 15,),
-                    buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true)
+                    buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true, keyboardType: TextInputType.number)
                   ] else
                     ...[
-                      buildTextField("Enter Username", Icons.person, usernameController),
+                      buildTextField("Enter Username", Icons.person, usernameController, keyboardType: TextInputType.text),
                       SizedBox(height: 15,),
-                      buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true),
+                      buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true, keyboardType: TextInputType.number),
                     ],
 
                   SizedBox(height: 25,),
@@ -206,9 +206,11 @@ class _LoginScreen extends State<LoginScreen> {
     );
   }
 
-  Widget buildTextField(String hintText, IconData leadingIcon, TextEditingController controller,{IconData? trailingIcon, bool isPassword = false}) {
+  Widget buildTextField(String hintText, IconData leadingIcon, TextEditingController controller,
+      {IconData? trailingIcon, bool isPassword = false, TextInputType?  keyboardType}) {
     return TextFormField(
       controller: controller,
+      keyboardType: keyboardType,
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: Icon(leadingIcon, color: Colors.redAccent,),

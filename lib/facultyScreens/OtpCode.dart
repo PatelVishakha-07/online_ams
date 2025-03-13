@@ -29,14 +29,15 @@ class _OTPScrState extends State<OTPScreen> {
   TextEditingController validTimeController = TextEditingController();
 
 
-  Future<void> SubjectList() async{
+  Future<void> FetchSubjectList() async{
     final uri = Uri.parse("$URL/fetchSubject");
     final response = await http.post(
       uri,
       headers: {"Content-Type":"application/json"},
       body: jsonEncode({
         "faculty_id":widget.faculty_id,
-        "role":"Faculty"
+        "role":"Faculty",
+        "class_id":selectedYear
       })
     );
     if(response.statusCode == 200){
@@ -110,7 +111,6 @@ class _OTPScrState extends State<OTPScreen> {
         });
       }
     });
-    SubjectList();
   }
 
   @override
@@ -119,7 +119,7 @@ class _OTPScrState extends State<OTPScreen> {
       appBar: AppBar(
         title: Text("Code for Attendance",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)),
         centerTitle: true,
-        backgroundColor: Colors.pink.shade300,
+        backgroundColor: Colors.indigo.shade50,
       ),
       backgroundColor: Colors.pink.shade50,
       body: SingleChildScrollView(
@@ -136,7 +136,11 @@ class _OTPScrState extends State<OTPScreen> {
                   SizedBox(height: 20,),
                   isLoadingYear ? CircularProgressIndicator() :
                   buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: selectedYear,icon: Icons.class_outlined,
-                      onChanged: (value){ setState(() { selectedYear=value.toString(); FetchDivision();}); }, id_name: "class_id", name: "year"),
+                      onChanged: (value){ setState(() {
+                        selectedYear=value.toString();
+                        FetchDivision();
+                        FetchSubjectList();
+                      }); }, id_name: "class_id", name: "year"),
 
                   SizedBox(height: 20,),
                   isLoadingDivision ? CircularProgressIndicator() :
@@ -158,6 +162,26 @@ class _OTPScrState extends State<OTPScreen> {
                   SizedBox(height: 40,),
                   ElevatedButton(
                       onPressed: () async{
+                        setState(() {});
+                        Future.delayed(Duration.zero, (){
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false, // Prevent dismissing by tapping outside
+                            builder: (context) {
+                              return AlertDialog(
+                                content: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    CircularProgressIndicator(),
+                                    SizedBox(width: 15),
+                                    Text("Generating OTP..."),
+                                  ],
+                                ),
+                              );
+                            },
+                          );
+                        });
+
                         String otp_code = GenerateOtp();
                         String created_at = DateTime.now().toString();
                         int validMinutes = int.parse(validTimeController.text.toString());
@@ -167,20 +191,14 @@ class _OTPScrState extends State<OTPScreen> {
                         double faculty_longitude = facultyLocation!.longitude;
                         String areaSize = locationController.text.toString();
 
-                        Modules.SaveOtp(context, otp_code, int.parse(selectedYear!), widget.faculty_id, int.parse(selectedDivision!), created_at,
+                        await Modules.SaveOtp(context, otp_code, int.parse(selectedYear!), widget.faculty_id, int.parse(selectedDivision!), created_at,
                            expiry_time, int.parse(selectedSubject!),faculty_latitude.toString(),faculty_longitude.toString(),areaSize);
 
+                        if (context.mounted) {
+                          Navigator.pop(context);
+                        }
                         showOtpDialog(otp_code);
 
-                        // Schedule markAbsentees API call after valid Minutes
-                        Future.delayed(Duration(minutes: validMinutes), () {
-                          if(context.mounted){
-                            Future.microtask((){
-                              Attendance.MarkAbsentees(faculty_id: widget.faculty_id.toString(), class_id:  selectedYear,
-                                  division_id: selectedDivision, subject_id: selectedSubject);
-                            });
-                          }
-                        });
 
                       },
                       child: Text("Submit",style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red, fontSize: 23),),

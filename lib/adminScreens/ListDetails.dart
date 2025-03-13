@@ -295,6 +295,7 @@ Future<bool> showClassAlertDialog(BuildContext context, String dept, String titl
   }
 
   return showDialog(
+    barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -358,8 +359,8 @@ Future<bool> showClassAlertDialog(BuildContext context, String dept, String titl
                           bool success = await sendDataToAPI(titleText);
                           Navigator.pop(context,success);
                         }else if( titleText == "Update Class"){
-                          UpdateClassDivsion(context, dept, selectedClass, selectedDivision, oldYear, oldDiv);
-                          Navigator.pop(context);
+                          bool success = await UpdateClassDivsion(context, dept, selectedClass, selectedDivision, oldYear, oldDiv);
+                          Navigator.pop(context,success);
                         }
                       },
                       child: Text(actionText)
@@ -385,9 +386,11 @@ Future<bool> UpdateClassDivsion(BuildContext context, String dept,String? year, 
         "old_division":oldDiv
       })
   );
-  if(response.statusCode == 200){
+  if(response.statusCode == 202){
     return true;
-  }else{
+  }else if(response.statusCode == 201){ return true; }
+  else if(response.statusCode == 203){ return true; }
+  else{
     return false;
   }
 }

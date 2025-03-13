@@ -7,7 +7,7 @@ import 'package:online_ams/adminScreens/Password.dart';
 import 'package:online_ams/adminScreens/Students.dart';
 import 'package:online_ams/adminScreens/Subject.dart';
 
-var URL="https://29cf-2409-4080-948c-7c17-41d9-c5f0-d375-2191.ngrok-free.app";
+var URL="https://d4d3-2401-4900-7c07-8514-3c69-d9b9-db89-e194.ngrok-free.app";
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
