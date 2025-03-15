@@ -87,18 +87,17 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
         studentDobController.text = DateFormat('yyyy-MM-dd').format(studentDob!);
         studentDepartment = student["department"];
 
-        studentClass = student["year"];
-        studentDivision = student["division"];
-
-      // Set academic year and semester
-        studentAcademicYear = student["academic_year"].toString();
-        studentSemester = student["semester"].toString();
-
       });
       academicYearList = await Modules.FetchAcademicYearList();
-      semesterList = await Modules.FetchSemesterList(studentAcademicYear!);
+      semesterList = await Modules.FetchSemesterList(academicYearId: studentAcademicYear);
       studentYearList = await Modules.FetchYear(studentDepartment!);
       studentDivisionList = await Modules.FetchDivision(studentClass!);
+      setState(() {
+        studentAcademicYear = student["academic_year"].toString();
+        studentSemester = student["semester"].toString();
+        studentClass = student["year"];
+        studentDivision = student["division"];
+      });
     }
   }
 

@@ -114,9 +114,16 @@ import 'package:permission_handler/permission_handler.dart';
    }
 
    // FUNCTION TO FETCH SUBJECT TABLE DATA
-   static Future<List<dynamic>> FetchSubjectList(
-       {String? role, String? dept, String? year, int? faculty_id, String? semester_id}) async {
-     final uri = Uri.parse(URL + "/fetchSubject");
+   static Future<List<dynamic>> FetchSubjectList({String? role, String? dept, String? year, int? faculty_id,
+     String? semester_id, String? option, String? subject_id}) async {
+
+     final uri;
+     if(role == "Subject"){
+     uri = Uri.parse(URL + "/fetchSingleRecord");
+     }else{
+       uri = Uri.parse(URL + "/fetchSubject");
+     }
+
      final response = await http.post(uri,
          headers: {"Content-Type": "application/json"},
          body: jsonEncode({
@@ -124,7 +131,8 @@ import 'package:permission_handler/permission_handler.dart';
            "department": dept,
            "year": year,
            "faculty_id": faculty_id,
-           "semester_id":semester_id
+           "semester_id":semester_id,
+           "subject_id":subject_id
          })
      );
 
@@ -154,7 +162,7 @@ import 'package:permission_handler/permission_handler.dart';
 
    // FUNCTION TO REMOVE FACULTY
    static Future<void> DeleteData(BuildContext context,
-       { String? option, String? student_id, String? faculty_id,
+       { String? option, String? student_id, String? faculty_id, String? subject_id,
          String? class_id, String? division_id}) async {
      final uri = Uri.parse(URL + "/deleteRecord");
      final response = await http.post(
@@ -165,7 +173,8 @@ import 'package:permission_handler/permission_handler.dart';
            "student_id": student_id.toString(),
            "faculty_id": faculty_id.toString(),
            "class_id": class_id.toString(),
-           "division_id": division_id.toString()
+           "division_id": division_id.toString(),
+           "subject_id":subject_id
          })
      );
      if (response.statusCode == 200) {
@@ -237,7 +246,7 @@ import 'package:permission_handler/permission_handler.dart';
      }
    }
 
-   static Future<dynamic> FetchSemesterList(String academicYearId) async {
+   static Future<dynamic> FetchSemesterList({String? academicYearId}) async {
      final uri = Uri.parse(URL + "/fetchSemesters");
      final response = await http.post(
        uri,

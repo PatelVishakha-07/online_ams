@@ -1,8 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:online_ams/Modules.dart';
+import 'package:online_ams/adminScreens/AddSubject.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
+import 'AddSubject.dart' as addSub;
 
 class SubjectListScreen extends StatefulWidget {
   final String subjectDepartment, subjectYear, role;
@@ -92,7 +94,10 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                                         ],
                                         icon: Icon(Icons.more_vert),
                                         onSelected: (value)=>{
-                                          if(value == "update"){}
+                                          if(value == "update"){
+                                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                                AddSubjectScreen(option: "Update Subject", sub_id: item["subject_id"].toString())))
+                                          }
                                           else if(value == "Delete"){}
                                         },
                                       )

@@ -35,7 +35,8 @@ class Attendance{
   }
 
   //FUNCTION TO VERIFY OTP CODE ENTERED BY STUDENT
-  static Future<String> ValidateOtp(BuildContext context, String OtpCode, String class_id, String division_id, String subject_id) async{
+  static Future<String> ValidateOtp(BuildContext context, String OtpCode, String class_id,
+      String division_id, String subject_id, String? student_id) async{
 
     final uri = Uri.parse(URL+"/checkOTP");
     final response = await http.post(
@@ -45,12 +46,15 @@ class Attendance{
           "otp_code":OtpCode,
           "class_id":class_id,
           "division_id":division_id,
-          "subject_id":subject_id
+          "subject_id":subject_id,
+          "student_id":student_id
         })
     );
 
-    if(response.statusCode != 200){
+    if(response.statusCode == 401){
       return "Invalid";
+    }else if(response.statusCode == 505){
+      return "Attendance Already Marked";
     }
 
     Position? studentPosition = await Modules.GetCurrentLocation();
@@ -63,7 +67,7 @@ class Attendance{
     double faculty_latitude =0.0, faculty_longitude=0.0, allowed_radius=0.0;
 
     if (facultyLocationList != null && facultyLocationList.isNotEmpty) {
-      final facultyLocation = facultyLocationList[0]; // Get first item if list
+      final facultyLocation = facultyLocationList[0];
       faculty_latitude = double.parse(facultyLocation["faculty_latitude"].toString());
       faculty_longitude = double.parse(facultyLocation["faculty_longitude"].toString());
       allowed_radius = double.parse(facultyLocation["area"].toString());
@@ -170,7 +174,7 @@ class Attendance{
                           });
                           String otpCode = codeController.text.trim().toString();
                           String subject_id = selectedSubject.toString();
-                          String msg = await ValidateOtp(context, otpCode, class_id, division_id, subject_id);
+                          String msg = await ValidateOtp(context, otpCode, class_id, division_id, subject_id,student_id );
                           setState(() {
                             isLoading = false; // Stop loading
                           });

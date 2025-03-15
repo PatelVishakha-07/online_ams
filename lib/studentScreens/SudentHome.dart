@@ -26,7 +26,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Uint8List? imageBytes;
   int? student_id;
   late Future<List<dynamic>> studentDetails = Future.value([]);
-  String? stdDept, stdYear, stdDiv, stdName, stdContact, stdDob;
+  String? stdDept, stdYear, stdDiv, stdName, stdContact, stdDob, stdRollNo;
   String? classId, divId, semester_id, academic_year_id;
   late List<dynamic> subjectList =[], semesterList =[], yearList=[], academicYearList=[];
   bool isLoadingYear = false, isLoadingSemester = false, isLoadingAcademicYear = false,  isLoading = false;
@@ -51,6 +51,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         stdYear = values[0]["year"];
         stdDiv = values[0]["division"];
         stdDob = values[0]["dob"];
+        stdRollNo = values[0]["student_id"];
         classId = values[0]["class_id"].toString();
         divId = values[0]["division_id"].toString();
         semester_id = values[0]["semester_id"].toString();
@@ -59,7 +60,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
       academicYearList = await Modules.FetchAcademicYearList();
       yearList = await Modules.FetchYear(stdDept!);
-      semesterList = await Modules.FetchSemesterList(yearList.isNotEmpty ? yearList[0]["year_id"] : null);
+      semesterList = await Modules.FetchSemesterList();
       subjectList = await Modules.FetchSubjectList(semester_id: semester_id, role: "Attendance_Report", year: stdYear, dept: stdDept);
 
       setState(() {
@@ -214,8 +215,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             else if (msg == "No Face Found"){
                               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No Face Found")));
                             }
-                          }else{
+                          }
+                          else if(status == "Invalid"){
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("OTP Code is Not Valid")));
+                          }
+                          else if(status == "Attendance Already Marked"){
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Attendance is Already Marked for this lecture")));
                           }
                         }
                         else if(studentDashboardItems[index]["route"] == "Attendance_Report"){
@@ -266,7 +271,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               subjectList = [];
                               isLoadingSemester = true;
                             });
-                            List newSemesterList = await Modules.FetchSemesterList(selectedAcademicYear!);
+                            List newSemesterList = await Modules.FetchSemesterList(academicYearId: selectedAcademicYear);
                             setState(() {
                               semesterList = newSemesterList.toSet().toList();
                               selectedSemester = null;  // Reset semester AFTER loading

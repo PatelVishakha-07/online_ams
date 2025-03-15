@@ -19,7 +19,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
 
   Uint8List? stdImage;
   bool isLoading = false;
-  String? stdName, stdDept, stdContact, stdDob, year, division, academic_year, semester;
+  String? stdName, stdDept, stdContact, stdDob, year, division, academic_year, semester, stdRollNo;
   List<dynamic> attendanceData = [];
 
   @override
@@ -95,7 +95,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
           stdName = student["name"];
           stdDept = student["department"];
           stdContact = student["contact_no"];
-
+          stdRollNo = student["student_id"];
           DateFormat inputFormat = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
           DateTime parsedDate = inputFormat.parse(student["dob"]);
           stdDob = DateFormat('dd-MM-yyyy').format(parsedDate);
@@ -153,6 +153,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
 
                       Text("Name: " + (stdName ?? "N/A"), style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
                       Text("Date of Birth: " + (stdDob ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
+                      Text("Roll No: " + (stdRollNo ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
                       Text("Academic Year: " + (academic_year ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
                       Text("Class: " + (year ?? "N/A") + ( stdDept ?? "N/A"), style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),
                       Text("Semester: " + (semester ?? "N/A") , style: TextStyle(fontSize: 16, color: Colors.grey.shade700),),

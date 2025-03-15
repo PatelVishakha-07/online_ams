@@ -14,7 +14,7 @@ class _SubjectScreenState extends State<SubjectScreen> {
 
   List<Map<String,dynamic>> subjectItems=[
     {"title":"View Subject","icon":Icons.remove_red_eye_outlined,"route": ListScreen(option: "Subject",)},
-    {"title":"Add Subject","icon":Icons.create,"route": AddSubjectScreen(option: "Add Subject",)},
+    {"title":"Add Subject","icon":Icons.create,"route": AddSubjectScreen(option: "Add Subject",sub_id: "0",)},
   ];
 
   String todayDate=DateFormat('dd MMMM yyyy').format(DateTime.now());

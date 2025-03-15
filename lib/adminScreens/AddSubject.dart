@@ -6,8 +6,8 @@ import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
 
 class AddSubjectScreen extends StatefulWidget {
-  final String option;
-  const AddSubjectScreen({super.key, required this.option});
+  final String option, sub_id;
+  const AddSubjectScreen({super.key, required this.option, required this.sub_id});
 
   @override
   State<AddSubjectScreen> createState() => _AddSubjectScreenState();
@@ -18,19 +18,12 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   final formKey = GlobalKey<FormState>();
   TextEditingController subjectNameController = TextEditingController();
   TextEditingController subjectCodeController = TextEditingController();
-  String? selectedDepartment, selectedYear, selectedAcademicYear, selectedSemester ;
+  String? selectedDepartment, selectedYear, selectedAcademicYear, selectedSemester, yearName;
   var selectedFaculty;
   List<dynamic> academicYearList = [], semesterList = [], yearList = [];
   final List<String> deptList = ["BCA", "BBA", "BCOM", "BSC"];
   late List<dynamic> facultyList=[];
-  bool isLoadingFaculty = false, isLoadingYear = false, isLoadingAcademic = false, isLoadingSemester = false;
-
-  void getSubjectOldDetails(String subName, String subCode, String subYear, String subDept) {
-    subjectNameController = TextEditingController(text: subName);
-    subjectCodeController = TextEditingController(text: subCode);
-    selectedYear = subYear;
-    selectedDepartment = subDept;
-  }
+  bool isLoadingFaculty = false, isLoadingYear = false, isLoadingAcademic = false, isLoadingSemester = false, isLoading = false;
 
   Future<void> FetchFacultyList() async {
     if (selectedDepartment == null) return;
@@ -83,30 +76,42 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
     }
   }
 
-  @override
-  void initState() {
-    fetchAcademicYears();
-    super.initState();
+  Future<void> GetOldSubjectDetails() async{
+    List<dynamic> subList = await Modules.FetchSubjectList(role: "Subject",subject_id: widget.sub_id);
+    var sub = subList.firstWhere((s) => s["subject_id"].toString() == widget.sub_id.toString(), orElse:  () => null);
+    if(sub != null){
+      setState(() {
+        subjectNameController.text = sub["sub_name"];
+        subjectCodeController.text = sub["sub_code"].toString();
+        selectedDepartment = sub["department"];
+
+      });
+      await FetchYearList();
+      await FetchFacultyList();
+      semesterList = await Modules.FetchSemesterList();
+
+      setState(() {
+        selectedYear = yearList.firstWhere((year) => year["year"].toString() == sub["year"].toString(), orElse: () => null,)?["class_id"].toString();
+        selectedSemester = semesterList.firstWhere((sem) => sem["semester_id"].toString() == sub["semester_id"].toString(), orElse: () => null,)?["semester_id"].toString();
+        selectedFaculty = facultyList.firstWhere((fac) => fac["faculty_id"].toString() == sub["faculty_id"].toString(), orElse: () => null,)?["faculty_id"].toString();
+
+      });
+    }
   }
 
-  Future<void> fetchAcademicYears() async {
-
-    setState(() {
-      isLoadingAcademic= true;
-    });
-
-    List<dynamic> years = await Modules.FetchAcademicYearList();
-    setState(() {
-      academicYearList = years;
-      isLoadingAcademic = false;
-    });
+  @override
+  void initState() {
+    super.initState();
+    if(widget.option == "Update Subject"){
+      GetOldSubjectDetails();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Add Subject",
+        title: Text(widget.option,
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),),
         centerTitle: true,
         backgroundColor: Colors.pink[50],
@@ -154,24 +159,15 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 25,),
-
-                isLoadingAcademic ? CircularProgressIndicator():
-                buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: selectedAcademicYear,
-                    onChanged: (value) async{ setState(() {
-                    selectedAcademicYear = value;
-                    selectedSemester = null;
-                  });
-                    semesterList= await Modules.FetchSemesterList(value!) ;
-                },id_name: "academic_year_id", name: "academic_year"),
 
                 SizedBox(height: 25),
                 isLoadingAcademic ? CircularProgressIndicator():
                 buildDropDownButton(labelText:  "Select Year", items: yearList, selectedValue: selectedYear,
-                    onChanged: (value) {
+                    onChanged: (value) async{
                   setState(() {
                     selectedYear = value;
                   });
+                  semesterList= await Modules.FetchSemesterList() ;
                 },id_name: "class_id", name: "year"),
 
                 SizedBox(height: 25,),
@@ -195,7 +191,9 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
 
                 SizedBox(height: 25,),
                 ElevatedButton(
-                    onPressed: () {
+                    onPressed: isLoading
+                        ? null // Disable button while loading
+                        : () {
                       if (widget.option == "Add Subject") {
                         if(formKey.currentState!.validate()){
                           SaveSubject();
@@ -212,7 +210,8 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                     Text("Update", style: TextStyle(fontWeight: FontWeight.bold,
                         fontSize: 20,
                         color: Colors.red),)
-                )
+                ),
+                if (isLoading) CircularProgressIndicator(),
 
               ],
             ),
@@ -226,7 +225,7 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   Widget buildDropDownButton({required String labelText, required List<dynamic> items,
     required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name, required String? name }) {
     return DropdownButtonFormField(
-      value: items.any((item) => item[id_name] == selectedValue) ? selectedValue ?? "" : null,
+      value: items.any((item) => item[id_name].toString() == selectedValue) ? selectedValue ?? "" : null,
       validator: (value) {
         if(value == null) return "Please select $labelText";
         return null;
@@ -246,6 +245,7 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   }
 
   Future<void> SaveSubject() async{
+    if (mounted) setState(() => isLoading = true);
     String subjectName = subjectNameController.text.toString();
     String subjectCode = subjectCodeController.text.toString();
 
@@ -270,9 +270,14 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
     }else{
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Add Subject")));
     }
+    if (mounted) {
+      setState(() => isLoading = false);
+      Navigator.pop(context);
+    }
   }
 
   Future<void> UpdateSubject() async{
+    if (mounted) setState(() => isLoading = true);
     String subjectName = subjectNameController.text.toString();
     String subjectCode = subjectCodeController.text.toString();
 
@@ -281,13 +286,13 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
         uri,
         headers: {"Content-Type":"application/json"},
         body: jsonEncode({
+          "subject_id":widget.sub_id,
           "subject_name":subjectName,
           "subject_code":subjectCode,
           "subject_department":selectedDepartment,
-          "subject_year":selectedYear,
           "faculty_id":selectedFaculty,
-          "academic_year_id": selectedAcademicYear, // Send Academic Year ID
-          "semester_id": selectedSemester
+          "semester_id": selectedSemester,
+          "class_id":selectedYear
         })
     );
     if(response.statusCode == 200){
@@ -296,6 +301,10 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
 
     }else{
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Update Subject Details")));
+    }
+    if (mounted) {
+      setState(() => isLoading = false);
+      Navigator.pop(context);
     }
   }
 
