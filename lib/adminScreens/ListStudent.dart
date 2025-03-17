@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/StudentDetails.dart';
 import 'package:online_ams/adminScreens/UpdateStudent.dart';
+import 'package:online_ams/adminScreens/adminScreen.dart';
+import 'package:http/http.dart' as http;
 
 class ListStudentScreen extends StatefulWidget {
   final String stdDepartment, stdYear, stdDivision ;
@@ -18,7 +20,7 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
   List<dynamic> filteredStudents = [];
   List<dynamic> allStudents = [];
   TextEditingController searchController = TextEditingController();
-  String searchQuery = "";
+  String searchQuery = "", currentAcademicYearId = "";
   Set<int> selectedIndexes={};
   int totalIndex=0;
   
@@ -56,32 +58,62 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
     });
   }
 
+  Future<void> fetchCurentAcademicYear() async{
+    final uri = Uri.parse(URL+"/getCurrentAcademicYear");
+    final response = await http.post(
+        uri,
+      headers: {"Content-Type":"application/json"}
+    );
+    if(response.statusCode == 200){
+      final data = jsonDecode(response.body);
+      currentAcademicYearId = data["academic_year_id"].toString() ?? "";
+    }
+  }
+
   Future<void> PromoteStudents() async {
-    bool confirmPromotion = await showDialog(
+
+    bool isPromote = await showDialog(
+      barrierDismissible: false,
         context: context,
         builder: (context) => AlertDialog(
           title: Text("Promote Students"),
           content: Text("Are you sure you want to promote all the students to the next year?"),
           actions: [
             TextButton(
-                onPressed: (){
-                  Navigator.pop(context,false);
-                }, child: Text("Cancel",)
+              onPressed: () => Navigator.pop(context, true),
+              child: Text("Promote", style: TextStyle(color: Colors.blue)),
             ),
             TextButton(
-                onPressed: (){
-                  Navigator.pop(context,true);
-                }, child: Text("Promote",style: TextStyle(color: Colors.green))
-            )
+              onPressed: () => Navigator.pop(context, false),
+              child: Text("Cancel", style: TextStyle(color: Colors.red)),
+            ),
           ],
         )
     );
 
-    if(confirmPromotion){
-      for(var student in allStudents){
-        String newYear = GetNewYear(student["year"]);
-      }
+    if (!isPromote) return;
+
+    if (isPromote) {
+      final uri = Uri.parse(URL+"/promoteStudents");
+      final response = await http.post(
+          uri,
+          headers: {"Content-Type":"application/json"},
+          body: jsonEncode({"department":widget.stdDepartment})
+      );
+      var msg = jsonDecode(response.body);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg["message"])));
+      fetchCurentAcademicYear();
     }
+  }
+
+  String getNextAcademicYear(String currentYear) {
+    if (currentYear.contains("-")) {
+      List<String> years = currentYear.split("-");
+      int startYear = int.parse(years[0]);
+      int endYear = int.parse(years[1]);
+      return "${startYear + 1}-${endYear + 1}";
+    }
+    return currentYear;
   }
 
   String GetNewYear(String currentYear){
@@ -96,7 +128,7 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
         return currentYear;
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -153,7 +185,9 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
           ),
         ]:[
           IconButton(
-              onPressed: (){},
+              onPressed: (){
+                PromoteStudents();
+              },
               icon: Icon(Icons.upgrade),
             tooltip: "Promote Students",
 

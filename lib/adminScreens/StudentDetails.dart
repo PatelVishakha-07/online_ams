@@ -95,7 +95,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
           stdName = student["name"];
           stdDept = student["department"];
           stdContact = student["contact_no"];
-          stdRollNo = student["student_id"];
+          stdRollNo = student["student_id"].toString();
           DateFormat inputFormat = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'");
           DateTime parsedDate = inputFormat.parse(student["dob"]);
           stdDob = DateFormat('dd-MM-yyyy').format(parsedDate);

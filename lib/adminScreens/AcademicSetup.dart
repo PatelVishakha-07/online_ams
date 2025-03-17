@@ -1,11 +1,13 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
 
 class AcademicSetupScreen extends StatefulWidget {
-  const AcademicSetupScreen({super.key});
+  final String academic_year_id, academic_year;
+  const AcademicSetupScreen({super.key, required this.academic_year_id, required this.academic_year});
 
   @override
   State<AcademicSetupScreen> createState() => _AcademicSetupScreenState();
@@ -13,49 +15,28 @@ class AcademicSetupScreen extends StatefulWidget {
 
 class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
 
-  final TextEditingController academicYearController = TextEditingController();
   final TextEditingController semesterNumberController = TextEditingController();
   final TextEditingController startDateController = TextEditingController();
   final TextEditingController endDateController = TextEditingController();
-  int? selectedAcademicYearId;
   final formKey = GlobalKey<FormState>();
+  int academic_id = 0;
 
-  List<Map<String, dynamic>> academicYears = [];
+  List<dynamic> academicYears = [];
+
+  Future<void> FetchAcademic() async{
+    academicYears =await Modules.FetchAcademicYearList();
+  }
 
   @override
   void initState() {
     super.initState();
-    FetchAcademicYears();
-  }
-
-  Future<void> FetchAcademicYears() async {
-    var response = await http.post(Uri.parse("$URL/fetchAcademicYear"));
-    if (response.statusCode == 200) {
-      setState(() {
-        academicYears = List<Map<String, dynamic>>.from(jsonDecode(response.body));
-      });
-    }
-  }
-
-  Future<void> addAcademicYear() async {
-    var response = await http.post(
-      Uri.parse("$URL/addAcademicYear"),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"academic_year": academicYearController.text}),
-    );
-
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Academic Year Added!")));
-      FetchAcademicYears(); // Refresh the list
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add academic year")));
-    }
+    FetchAcademic();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Academic Setup \n     (Admin)"), centerTitle: true, backgroundColor: Colors.pink.shade300,),
+      appBar: AppBar(title: Text("Add Semester\n   ${widget.academic_year}"), centerTitle: true, backgroundColor: Colors.pink.shade300,),
       backgroundColor: Colors.pink.shade50,
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
@@ -67,16 +48,8 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                Text("Add Academic Year:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                buildTextField("Academic Year", Icons.date_range_outlined, academicYearController),
-                SizedBox(height: 30),
-                ElevatedButton(onPressed: addAcademicYear, child: Text("Add Academic Year")),
-
-                SizedBox(height: 20),
-
-                Text("Add Semester:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 DropdownButton<int>(
-                  value: selectedAcademicYearId,
+                  value: academic_id,
                   hint: Text("Select Academic Year"),
                   items: academicYears.map((year) {
                     return DropdownMenuItem<int>(
@@ -86,7 +59,7 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
                   }).toList(),
                   onChanged: (value) {
                     setState(() {
-                      selectedAcademicYearId = value;
+                      academic_id = value!;
                     });
                   },
                 ),
@@ -111,7 +84,7 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
       Uri.parse("$URL/addSemester"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
-        "academic_year_id": selectedAcademicYearId,
+        "academic_year_id": academic_id,
         "semester_no": int.tryParse(semesterNumberController.text),
         "start_date": startDateController.text,
         "end_date": endDateController.text,

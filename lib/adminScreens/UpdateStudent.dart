@@ -26,13 +26,13 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
   var studentDobController=TextEditingController();
   var studentRollNoController=TextEditingController();
 
-  String? studentClass, studentDivision, studentDepartment, studentAcademicYear, studentSemester;
+  String studentClass = "", studentDivision = "", studentDepartment = "", studentAcademicYear = "", studentSemester = "";
   String oldFirstName="", oldLastName="", oldMiddleName="";
   List<dynamic> studentData = [];
   DateTime? studentDob;
   final List<String> dept =["BCA","BBA","BCOM","BSC"];
   late List<dynamic> studentYearList = [], studentDivisionList = [], semesterList=[], academicYearList=[];
-  bool isLoading = false, isDataLoading = false;
+  bool isLoading = false, isDataLoading = false, isUpdating = false;
 
   Future<void> FetchOldData() async{
     setState(() => isDataLoading = true);
@@ -76,7 +76,6 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
           oldMiddleName = "";
           oldLastName = "";
         }
-
         studentFirstNameController.text = oldFirstName;
         studentMiddleNameController.text = oldMiddleName;
         studentLastNameController.text = oldLastName;
@@ -85,19 +84,28 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
 
         studentDob = DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parseUtc(student["dob"]);
         studentDobController.text = DateFormat('yyyy-MM-dd').format(studentDob!);
-        studentDepartment = student["department"];
+        studentDepartment = student["department"].toString();
 
       });
       academicYearList = await Modules.FetchAcademicYearList();
-      semesterList = await Modules.FetchSemesterList(academicYearId: studentAcademicYear);
+      semesterList = await Modules.FetchSemesterList(academicYearId: student["academic_year_id"].toString());
       studentYearList = await Modules.FetchYear(studentDepartment!);
-      studentDivisionList = await Modules.FetchDivision(studentClass!);
+      studentDivisionList = await Modules.FetchDivision(student["class_id"].toString());
       setState(() {
-        studentAcademicYear = student["academic_year"].toString();
-        studentSemester = student["semester"].toString();
-        studentClass = student["year"];
-        studentDivision = student["division"];
+        studentAcademicYear = academicYearList.firstWhere((academic) =>
+        academic["academic_year_id"].toString() == student["academic_year_id"].toString(), orElse: ()=>
+        null)["academic_year_id"].toString();
+
+        studentSemester = semesterList.firstWhere((sem) =>
+        sem["semester_id"].toString() == student["semester_id"].toString(), orElse: () => null)["semester_id"].toString();
+
+        studentClass = studentYearList.firstWhere((year) => year["class_id"].toString() == student["class_id"].toString(),
+        orElse: () => null)["class_id"].toString();
+
+        studentDivision = studentDivisionList.firstWhere((div) => div["division_id"].toString() == student["division_id"].toString(),
+        orElse: () => null)["division_id"].toString();
       });
+
     }
   }
 
@@ -143,7 +151,7 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
 
           SizedBox(height: 20,),
           DropdownButtonFormField<String>(
-            value: studentDepartment,
+            value: studentDepartment.toString(),
             decoration: InputDecoration(
                 labelText: "Select Department",
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(10))
@@ -151,15 +159,15 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
 
             items: dept.map((deptValue){
               return DropdownMenuItem(
-                value: deptValue,
-                child: Text(deptValue),
+                value: deptValue.toString(),
+                child: Text(deptValue.toString()),
               );
             }).toList(),
-            onChanged: (value){
+            onChanged: (value) async{
               setState(() {
-                studentDepartment=value;
-                //FetchYear();
+                studentDepartment=value.toString();
               });
+              studentYearList = await Modules.FetchYear(studentDepartment);
             },
             validator: (value){
               if(value == null || value.isEmpty) return "Please select department";
@@ -169,7 +177,12 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
 
           SizedBox(height: 20,),
           buildDropDownButton(labelText: "Select Year", items: studentYearList, selectedValue: studentClass,
-              onChanged: (value){ setState(() { studentClass=value.toString();}); }, id_name: "class_id", name: "year"),
+              onChanged: (value) async{
+            setState(() {
+              studentClass=value.toString();
+            });
+            studentDivisionList = await Modules.FetchDivision(studentClass);
+            }, id_name: "class_id", name: "year"),
 
           SizedBox(height: 20,),
           buildDropDownButton(labelText: "Select Division", items: studentDivisionList, selectedValue: studentDivision,
@@ -178,20 +191,25 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
 
           SizedBox(height: 20,),
           buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: studentAcademicYear,
-              onChanged: (value) { setState(() { studentAcademicYear = value.toString(); }); },
-              id_name: "academic_id", name: "academic_year"),
+              onChanged: (value) async{
+            setState(() {
+              studentAcademicYear = value.toString();
+            });
+            semesterList = await Modules.FetchSemesterList(academicYearId:studentAcademicYear);
+            },
+              id_name: "academic_year_id", name: "academic_year"),
 
           SizedBox(height: 20,),
           buildDropDownButton(labelText: "Select Semester", items: semesterList,
               selectedValue: studentSemester, onChanged: (value) { setState(() { studentSemester = value.toString(); }); },
-              id_name: "semester_id", name: "semester"),
+              id_name: "semester_id", name: "semester_number"),
 
           SizedBox(height: 20,),
           buildDobField(),
 
           SizedBox(height: 20,),
           ElevatedButton(
-              onPressed: () async{
+              onPressed: isUpdating ? null : () async{
                 String name=studentFirstNameController.text.toString() + " " + studentMiddleNameController.text.toString()
                     + " " + studentLastNameController.text.toString();
                 String contact=studentContactNoController.text.toString();
@@ -199,6 +217,7 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
                 String formattedDob=studentDob != null ? DateFormat('yyyy-MM-dd').format(studentDob!) : "";
 
                 setState(() {
+                  isUpdating = true;
                   isLoading = true;
                 });
                 bool success = await Modules.updateStudentFacultyData(context, studentDepartment, name, contact, formattedDob, "Student",
@@ -206,6 +225,7 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
                 studentAcademicYear: studentAcademicYear, studentSemester: studentSemester);
 
                 setState(() {
+                  isUpdating = false;
                   isLoading = false;
                 });
                 if(success){
@@ -215,7 +235,14 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to update Student data. Try again!")));
                 }
               },
-              child: Text("Update")
+              child: isLoading ? SizedBox(
+                width: 24, height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+                  : Text("Update")
           )
         ],
       ),
@@ -224,8 +251,9 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
 
   Widget buildDropDownButton({required String labelText, required List<dynamic> items,
     required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name, required String? name }) {
+    String? validSelectedValue = items.any((item) => item[id_name].toString() == selectedValue.toString()) ?
+    selectedValue.toString() : null;
 
-    String? validSelectedValue = items.any((item) => item[id_name] == selectedValue) ? selectedValue : null;
     return DropdownButtonFormField(
       value: validSelectedValue,
       validator: (value) {
@@ -238,9 +266,9 @@ class _UpdateStudentScreenState extends State<UpdateStudentScreen> {
       ),
       items: (items ?? []).map((dynamic item){
         return DropdownMenuItem<dynamic>(
-            value: item[id_name],
-            child: Text(item[name],
-            ));
+            value: item[id_name].toString(),
+            child: Text(item[name].toString(),)
+        );
       }).toList(),
       onChanged: onChanged,
     );

@@ -26,7 +26,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   var studentLastNameController=TextEditingController();
   var studentContactNoController=TextEditingController();
   var studentDobController=TextEditingController();
-  var studentRollNoController=TextEditingController();
   String? studentClass ="", studentDivision="", studentDepartment="", studentSemester="", studentAcademicYear="";
   DateTime? studentDob;
   late List<dynamic> yearList = [], divisionList = [], semesterList = [], academicYearList = [];
@@ -193,7 +192,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     String studentLastName=studentLastNameController.text.toString();
     String studentContactNo=studentContactNoController.text.toString();
     String studentDept=studentDepartment.toString();
-    String studentRollNo=studentRollNoController.text.toString();
     String studentbirthDate=studentDobController.text.toString();
 
     final uri=Uri.parse(URL+"/addSingleRecord");
@@ -205,7 +203,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           "first_name":studentFirstName,
           "middle_name":studentMiddleName,
           "last_name":studentLastName,
-          "roll_no":studentRollNo,
           "contact_no":studentContactNo,
           "department":studentDept,
           "dob":studentbirthDate,
@@ -222,7 +219,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       studentLastNameController.clear();
       studentDobController.clear();
       studentContactNoController.clear();
-      studentRollNoController.clear();
       return true;
     }else{
       return false;
@@ -321,8 +317,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
             });}, id_name:  "semester_id", name:  "semester_number"),
 
 
-          SizedBox(height: 20,),
-          buildTextFormField("Enter Roll number",Icons.confirmation_number_outlined,studentRollNoController),
           SizedBox(height: 20,),
           buildDobField(),
 

@@ -8,6 +8,7 @@ import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:online_ams/facultyScreens/FacultySubjectList.dart';
 import 'package:online_ams/facultyScreens/OtpCode.dart';
 import 'package:http/http.dart' as http;
+import 'package:online_ams/facultyScreens/StudentReport.dart';
 
 
 class FacultyHomeScreen extends StatefulWidget {
@@ -24,15 +25,21 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   String todayDay=DateFormat('EEEE').format(DateTime.now());
 
   int? faculty_id;
+  final formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
     super.initState();
-    Modules.FetchId(widget.username,"Faculty").then((id){
+    FetchDetails();
+  }
+
+  void FetchDetails() async{
+    await Modules.FetchId(widget.username,"Faculty").then((id){
       setState(() {
         faculty_id = id;
       });
     });
+
   }
 
   @override
@@ -46,7 +53,77 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
     List<Map<String,dynamic>> facultyItems=[
       {"title":"Generate Code","icon":Icons.password,"route":OTPScreen(faculty_id: faculty_id!,)},
       {"title":"View Subject","icon":Icons.remove_red_eye_outlined,"route":FacultySubjectList(faculty_id: faculty_id!, )},
+      {"title":"View Student\n   Report","icon":Icons.file_copy_outlined,"route":"student_report" },
     ];
+
+    void ShowSubjectDialog() async{
+      String? subjectSelected;
+      Future<List<dynamic>> subjectList = Modules.FetchSubjectList(role: "Faculty", faculty_id: faculty_id);
+
+      showDialog(
+        barrierDismissible: false,
+          context: context,
+          builder: (context) => StatefulBuilder(builder: (context, setState){
+            return AlertDialog(
+              title: Text("Select Subject: "),
+              content: FutureBuilder<List<dynamic>>(
+                  future: subjectList,
+                  builder: (context, snapshot){
+                    if(snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator(),);
+                    else if(snapshot.hasError) return Center(child: Text("Error ${snapshot.error}"),);
+                    else if(!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text("No Subject Found"),);
+
+                    List<dynamic> items = snapshot.data!;
+                    return Form(
+                      key: formKey,
+                      child: DropdownButtonFormField<dynamic>(
+                        hint: Text("Select Subject"),
+                        value: subjectSelected, // Fix
+                        items: items.map((subject){
+                          return DropdownMenuItem<String>(
+                            value: subject["subject_id"].toString(),
+                            child: Text(subject["sub_name"].toString()),
+                          );
+                        }).toList(),
+                        onChanged: (value){
+                          setState((){
+                            subjectSelected = value.toString();
+                          });
+                        },
+                        validator: (value){
+                          if(value == null){
+                            return "Select Subject";
+                          }
+                          return null;
+                        },
+                        decoration: const InputDecoration(labelText: "Select Subject"),
+                      ),
+                    );
+                  }
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    if(formKey.currentState!.validate()){
+                      String subject_id = subjectSelected.toString();
+                      Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                          StudentReportScreen(faculty_id: faculty_id.toString(), subject_id: subject_id,)));
+                      Navigator.pop(context);
+                    }
+                  },
+                  child:Text("Submit"),
+                ),
+              ],
+
+            );
+          })
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -84,7 +161,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
                   itemBuilder: (context,index){
                     return GestureDetector(
                       onTap: (){
-                        Navigator.push(context,MaterialPageRoute(builder: (context)=>facultyItems[index]["route"]));
+                        if(facultyItems[index]["route"] == "student_report"){
+                          ShowSubjectDialog();
+                        }else{
+                          Navigator.push(context,MaterialPageRoute(builder: (context)=>facultyItems[index]["route"]));
+                        }
                       },
                       child: Card(
                         color: Colors.blue[100],
