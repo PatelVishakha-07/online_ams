@@ -9,6 +9,7 @@ import 'package:online_ams/facultyScreens/FacultySubjectList.dart';
 import 'package:online_ams/facultyScreens/OtpCode.dart';
 import 'package:http/http.dart' as http;
 import 'package:online_ams/facultyScreens/StudentReport.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class FacultyHomeScreen extends StatefulWidget {
@@ -78,7 +79,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
                       key: formKey,
                       child: DropdownButtonFormField<dynamic>(
                         hint: Text("Select Subject"),
-                        value: subjectSelected, // Fix
+                        value: subjectSelected,
                         items: items.map((subject){
                           return DropdownMenuItem<String>(
                             value: subject["subject_id"].toString(),
@@ -130,6 +131,14 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         title: Text("Dashboard\n   (Faculty)",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
         centerTitle: true,
         backgroundColor: Colors.pink[50],
+        actions: [
+          IconButton(
+              onPressed: (){
+                Modules.showLogoutDialog(context);
+              },
+              icon: Icon(Icons.logout, color: Colors.red),
+          )
+        ],
       ),
       backgroundColor: Colors.pink.shade50,
       body: Padding(
@@ -188,5 +197,6 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
       ),
     );
   }
+
 }
 

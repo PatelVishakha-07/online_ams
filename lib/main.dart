@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-
 import 'package:face_camera/face_camera.dart';
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
@@ -9,14 +8,35 @@ import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:online_ams/facultyScreens/FacultyHome.dart';
 import 'package:online_ams/studentScreens/Camera.dart';
 import 'package:online_ams/studentScreens/SudentHome.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await FaceCamera.initialize();
-  runApp( MyApp());
+  SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+  bool isLoggedIn = sharedPreferences.getBool("isLoggedIn") ?? false;
+  String? username = sharedPreferences.getString("username");
+  String? role = sharedPreferences.getString("role");
+
+  Widget homeScreen;
+  if(isLoggedIn && username != null && role != null){
+    if(role == "Admin"){
+      homeScreen = AdminScreen();
+    }else if(role == "Faculty"){
+      homeScreen = FacultyHomeScreen(username: username);
+    }else{
+      homeScreen = StudentHomeScreen(username: username);
+    }
+  }else{
+    homeScreen = LoginScreen();
+  }
+  runApp( MyApp(homeScreen: homeScreen,));
 }
 
 class MyApp extends StatelessWidget{
+  final Widget homeScreen;
+  const MyApp({super.key, required this.homeScreen});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -24,7 +44,7 @@ class MyApp extends StatelessWidget{
         primarySwatch: Colors.amber
       ),
       debugShowCheckedModeBanner: false,
-      home: LoginScreen(),
+      home: homeScreen,
     );
   }
 }
@@ -64,39 +84,31 @@ class _LoginScreen extends State<LoginScreen> {
       },
     );
 
+    int statusCode= await CheckCredentials(username, password,selectedRole);
+    Navigator.pop(context);
+    if(statusCode == 200){
 
-    if(selectedRole=="Admin"){
-      Navigator.pop(context);
-      Navigator.push(context, MaterialPageRoute(builder: (context)=>AdminScreen()));
-      /*
-        int statusCode= await CheckCredentials(username,password,selectedRole);
-        if(statusCode == 200){
-          Navigator.push(context, MaterialPageRoute(builder: (context)=>AdminScreen()));
-        }else{
-        }
-      */
-    }
-    else if(selectedRole=="Faculty" || selectedRole=="Student"){
+      SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+      await sharedPreferences.setBool("isLoggedIn", true);
+      await sharedPreferences.setString("username", username);
+      await sharedPreferences.setString("role", selectedRole);
 
-      int statusCode= await CheckCredentials(username, password,selectedRole);
-      if(statusCode == 200){
-        if(selectedRole == "Student"){
-          var value = await FetchImage(username, password);
-          Navigator.pop(context);
-          if(value){
-            Navigator.push(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: username,)));
-          }else{
-            Navigator.push(context, MaterialPageRoute(builder: (context) => StudentCameraScreen(username: username,)));
-          }
-        }else if(selectedRole == "Faculty") {
-          Navigator.pop(context);
-          Navigator.push(context, MaterialPageRoute(
-              builder: (context) => FacultyHomeScreen(username: username)));
-        }
-      }else{
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invalid Credentials")));
+      if(selectedRole=="Admin"){
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>AdminScreen()));
       }
+      else if(selectedRole == "Student"){
+        var value = await FetchImage(username, password);
+        if(value){
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: username,)));
+        }else{
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StudentCameraScreen(username: username,)));
+        }
+      }else if(selectedRole == "Faculty") {
+        Navigator.push(context, MaterialPageRoute(builder: (context) => FacultyHomeScreen(username: username)));
+      }
+    }else{
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invalid Credentials")));
     }
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/AcademicList.dart';
 import 'package:online_ams/adminScreens/AcademicSetup.dart';
 import 'package:online_ams/adminScreens/Faculty.dart';
@@ -8,7 +9,7 @@ import 'package:online_ams/adminScreens/Password.dart';
 import 'package:online_ams/adminScreens/Students.dart';
 import 'package:online_ams/adminScreens/Subject.dart';
 
-var URL="https://61e7-2409-4080-9eb8-6178-6072-73b2-3e8c-3f16.ngrok-free.app";
+var URL="https://69c0-2409-4080-9eb8-6178-4870-2b5f-145-113d.ngrok-free.app";
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
@@ -38,6 +39,15 @@ class _AdminScreenState extends State<AdminScreen> {
         title: Text("Dashboard\n   (Admin)",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
         centerTitle: true,
         backgroundColor: Colors.pink[50],
+        actions: [
+          IconButton(
+              onPressed: (){
+                Modules.showLogoutDialog(context);
+              },
+              icon: Icon(Icons.logout_outlined, color: Colors.red,),
+            tooltip: "Click here to Logout",
+          )
+        ],
       ),
       backgroundColor: Colors.pink.shade50,
       body: Padding(

@@ -20,7 +20,7 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   TextEditingController subjectCodeController = TextEditingController();
   String? selectedDepartment, selectedYear, selectedAcademicYear, selectedSemester, yearName;
   var selectedFaculty;
-  List<dynamic> academicYearList = [], semesterList = [], yearList = [];
+  List<dynamic> academicYearList = [], semesterList = [], yearList = [], academicList = [];
   final List<String> deptList = ["BCA", "BBA", "BCOM", "BSC"];
   late List<dynamic> facultyList=[];
   bool isLoadingFaculty = false, isLoadingYear = false, isLoadingAcademic = false, isLoadingSemester = false, isLoading = false;
@@ -53,8 +53,14 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   Future<void> FetchYearList() async {
     if (selectedDepartment == null) return;
     setState(() {
+      yearList.clear();
       isLoadingYear= true;
     });
+    yearList = await Modules.FetchYear(selectedDepartment.toString());
+    setState(() {
+      isLoadingYear = false;
+    });
+    /*
     final uri = Uri.parse(URL + "/fetchYearNameId");
     final response = await http.post(
         uri,
@@ -73,7 +79,18 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
         isLoadingYear = false;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch year list")));
       });
-    }
+    } */
+  }
+
+  Future<void> FetchAcademicList() async {
+    setState(() {
+      academicList.clear();
+      isLoadingAcademic = true;
+    });
+    academicList = await Modules.FetchAcademicYearList();
+    setState(() {
+      isLoadingAcademic = false;
+    });
   }
 
   Future<void> GetOldSubjectDetails() async{
@@ -88,6 +105,7 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
       });
       await FetchYearList();
       await FetchFacultyList();
+      academicList = await Modules.FetchAcademicYearList();
       semesterList = await Modules.FetchSemesterList();
 
       setState(() {
@@ -151,8 +169,9 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                     setState(() {
                       selectedDepartment=value.toString();
                     });
-                    await FetchFacultyList();
+                    await FetchAcademicList();
                     await FetchYearList();
+                    await FetchFacultyList();
                   },
                   validator: (value){
                     if(value == null || value.isEmpty) return "Please select department";
@@ -160,18 +179,31 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                   },
                 ),
 
-                SizedBox(height: 25),
+                SizedBox(height: 25,),
                 isLoadingAcademic ? CircularProgressIndicator():
+                    buildDropDownButton(labelText: "Select Academic Year", items: academicList, selectedValue: selectedAcademicYear,
+                        onChanged: (value) async{
+                      setState(() {
+                        selectedAcademicYear = value.toString();
+                        isLoadingSemester = true;
+                      });
+                      semesterList= await Modules.FetchSemesterList(academicYearId: selectedAcademicYear.toString());
+                      setState(() {
+                        isLoadingSemester = false;
+                      });
+                        }, id_name: "academic_year_id", name: "academic_year"),
+
+                SizedBox(height: 25),
+                isLoadingYear ? CircularProgressIndicator():
                 buildDropDownButton(labelText:  "Select Year", items: yearList, selectedValue: selectedYear,
                     onChanged: (value) async{
                   setState(() {
                     selectedYear = value;
                   });
-                  semesterList= await Modules.FetchSemesterList() ;
                 },id_name: "class_id", name: "year"),
 
                 SizedBox(height: 25,),
-                isLoadingAcademic ? CircularProgressIndicator():
+                isLoadingSemester ? CircularProgressIndicator():
                 buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue: selectedSemester,
                     onChanged: (value){
                       setState(() {

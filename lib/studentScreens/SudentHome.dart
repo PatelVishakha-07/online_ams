@@ -51,7 +51,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         stdYear = values[0]["year"];
         stdDiv = values[0]["division"];
         stdDob = values[0]["dob"];
-        stdRollNo = values[0]["student_id"];
+        stdRollNo = values[0]["student_id"].toString();
         classId = values[0]["class_id"].toString();
         divId = values[0]["division_id"].toString();
         semester_id = values[0]["semester_id"].toString();
@@ -124,6 +124,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         title: Text("Dashboard \n  (Student)",style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.pink.shade50,
         centerTitle: true,
+        actions: [
+          IconButton(
+              onPressed: (){
+                Modules.showLogoutDialog(context);
+              },
+              icon: Icon(Icons.logout_outlined, color: Colors.red)
+          )
+        ],
       ),
       backgroundColor: Colors.pink.shade50,
       body: Padding(

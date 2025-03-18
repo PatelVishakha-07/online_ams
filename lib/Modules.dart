@@ -5,7 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
+import 'package:online_ams/main.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
  class Modules {
 
@@ -259,6 +261,33 @@ import 'package:permission_handler/permission_handler.dart';
      } else {
        return [];
      }
+   }
+
+   static void showLogoutDialog(BuildContext context){
+     showDialog(
+         context: context,
+         builder: (context) => AlertDialog(
+           title: Text("Logout"),
+           icon: Icon(Icons.warning_amber_outlined),
+           content: Text("Are You Sure You Want to Logout?"),
+           actions: [
+             TextButton(
+               onPressed: (){
+                 Navigator.pop(context);
+               },
+               child: Text("Cancel",),
+             ),
+             TextButton(
+                 onPressed: () async{
+                   SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+                   await sharedPreferences.clear();
+                   Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => LoginScreen()), (route) => false);
+                 },
+                 child: Text("Logout",),
+             )
+           ],
+         )
+     );
    }
 
  }
