@@ -66,7 +66,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
           context: context,
           builder: (context) => StatefulBuilder(builder: (context, setState){
             return AlertDialog(
-              title: Text("Select Subject: "),
+              title: Text("Select Subject: ", style: TextStyle(fontWeight: FontWeight.bold),),
               content: FutureBuilder<List<dynamic>>(
                   future: subjectList,
                   builder: (context, snapshot){
@@ -78,7 +78,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
                     return Form(
                       key: formKey,
                       child: DropdownButtonFormField<dynamic>(
-                        hint: Text("Select Subject"),
+                        hint: Text("subject name"),
                         value: subjectSelected,
                         items: items.map((subject){
                           return DropdownMenuItem<String>(
@@ -112,9 +112,11 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
                   onPressed: () async {
                     if(formKey.currentState!.validate()){
                       String subject_id = subjectSelected.toString();
-                      Navigator.push(context, MaterialPageRoute(builder: (context) =>
+
+                      await Navigator.push(context, MaterialPageRoute(builder: (context) =>
                           StudentReportScreen(faculty_id: faculty_id.toString(), subject_id: subject_id,)));
-                      Navigator.pop(context);
+
+                      if(mounted) Navigator.pop(context);
                     }
                   },
                   child:Text("Submit"),

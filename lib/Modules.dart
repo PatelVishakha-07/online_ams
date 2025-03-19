@@ -248,7 +248,7 @@ import 'package:shared_preferences/shared_preferences.dart';
      }
    }
 
-   static Future<dynamic> FetchSemesterList({String? academicYearId}) async {
+   static Future<List<dynamic>> FetchSemesterList({String? academicYearId}) async {
      final uri = Uri.parse(URL + "/fetchSemesters");
      final response = await http.post(
        uri,
@@ -265,17 +265,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 
    static void showLogoutDialog(BuildContext context){
      showDialog(
+       barrierDismissible: false,
          context: context,
          builder: (context) => AlertDialog(
-           title: Text("Logout"),
-           icon: Icon(Icons.warning_amber_outlined),
-           content: Text("Are You Sure You Want to Logout?"),
+           elevation: 4,
+           shape: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+           title: Text("Logout", style: TextStyle(color: Colors.redAccent),),
+           icon: Icon(Icons.warning_amber_outlined, color: Colors.red,),
+           content: Text("Are You Sure You Want to Logout?", style: TextStyle(fontSize: 20),),
            actions: [
              TextButton(
                onPressed: (){
                  Navigator.pop(context);
                },
-               child: Text("Cancel",),
+               child: Text("Cancel", style: TextStyle(color: Colors.green),),
              ),
              TextButton(
                  onPressed: () async{

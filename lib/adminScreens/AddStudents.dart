@@ -389,7 +389,8 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       maxLength: maxLength,
       keyboardType: keyboardType,
       inputFormatters: (keyboardType == TextInputType.phone)
-          ? [FilteringTextInputFormatter.digitsOnly] : null,
+          ? [FilteringTextInputFormatter.digitsOnly] : 
+      [FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z ]*$'))],
       decoration: InputDecoration(
         hintText: hintText,prefixIcon: Icon(icon),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -397,7 +398,12 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       ),
       validator: (value){
         if (value == null || value.isEmpty) return hintText;
-        if (keyboardType == TextInputType.phone && value.length != 10) return "Contact number must be 10 digits";
+        if (keyboardType == TextInputType.phone) {
+          final RegExp indianNumberRegExp = RegExp(r'^[6789]\d{9}$');
+          if (!indianNumberRegExp.hasMatch(value)) {
+            return "Enter a valid Indian number (10 digits, starts with 6-9)";
+          }
+        }
         return null;
       },
     );

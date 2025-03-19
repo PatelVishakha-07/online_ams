@@ -19,6 +19,7 @@ class _StudentReportScreenState extends State<StudentReportScreen> {
   String searchQuery = "";
   List<dynamic> filteredStudents = [], allStudents = [];
   int totalIndex=0;
+  bool isLoading = false;
   TextEditingController searchController = TextEditingController();
 
   @override
@@ -48,6 +49,9 @@ class _StudentReportScreenState extends State<StudentReportScreen> {
 
 
   void FetchStudents() async{
+    setState(() {
+      isLoading = true;
+    });
     final uri = Uri.parse(URL+"/fetchStudentForFaculty");
     final response = await http.post(
       uri,
@@ -59,10 +63,16 @@ class _StudentReportScreenState extends State<StudentReportScreen> {
     );
     if(response.statusCode == 200){
       setState(() {
+        isLoading = false;
         allStudents = jsonDecode(response.body);
-        filteredStudents = allStudents; // Initially show all students
+        filteredStudents = allStudents;
       });
     }else{
+      setState(() {
+        isLoading = false;
+        allStudents = [];
+        filteredStudents = [];
+      });
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No Students Found")));
     }
   }
@@ -89,8 +99,9 @@ class _StudentReportScreenState extends State<StudentReportScreen> {
               ),
             ),
             Expanded(
-                child:allStudents.isEmpty ? Center(child: CircularProgressIndicator(),) :
-                filteredStudents.isEmpty ? Center(child: Text("No Student Found"),) :
+                child: isLoading ? Center(child: CircularProgressIndicator(),) :
+                allStudents.isEmpty ? Center(child: Text("No Student Found"),) :
+                filteredStudents.isEmpty ? Center(child: Text("No Student Matched Your Search"),) :
                 ListView.builder(
                   itemCount: filteredStudents.length,
                     itemBuilder: (context,index){

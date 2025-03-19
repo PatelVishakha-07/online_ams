@@ -43,9 +43,17 @@ class _FacultySubjectListState extends State<FacultySubjectList> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Subject List",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)), 
+        title: Text("Subjects You Teach",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25, color: Colors.black87)),
         centerTitle: true, 
         backgroundColor: Colors.pink.shade50,
+        actions: [
+          IconButton(
+              onPressed: (){
+                facultySubjectList = FetchSubjectList();
+                setState(() {});
+                },
+              icon: Icon(Icons.refresh_outlined, color: Colors.black87))
+        ],
       ), 
       backgroundColor: Colors.pink.shade50,
       body: Column(

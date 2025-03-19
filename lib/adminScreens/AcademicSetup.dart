@@ -19,12 +19,19 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
   final TextEditingController startDateController = TextEditingController();
   final TextEditingController endDateController = TextEditingController();
   final formKey = GlobalKey<FormState>();
-  int academic_id = 0;
+  int? academic_id;
+  bool isLoading = false, isLoadingAcademic = false;
 
   List<dynamic> academicYears = [];
 
   Future<void> FetchAcademic() async{
-    academicYears =await Modules.FetchAcademicYearList();
+    isLoadingAcademic = true;
+
+    List<dynamic> fetchedYears =await Modules.FetchAcademicYearList();
+    setState(() {
+      academicYears = fetchedYears;
+      isLoadingAcademic = false;
+    });
   }
 
   @override
@@ -36,7 +43,10 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Add Semester\n   ${widget.academic_year}"), centerTitle: true, backgroundColor: Colors.pink.shade300,),
+      appBar: AppBar(title: Text("Add Semester\n (${widget.academic_year})", style: TextStyle(fontWeight: FontWeight.bold),),
+        centerTitle: true,
+        backgroundColor: Colors.pink.shade50,
+      ),
       backgroundColor: Colors.pink.shade50,
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
@@ -48,7 +58,14 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                DropdownButton<int>(
+                SizedBox(height: 30,),
+                isLoadingAcademic ? CircularProgressIndicator():
+                DropdownButtonFormField(
+                  decoration: InputDecoration(
+                    labelText: "Select Academic Year",
+                    prefixIcon: Icon(Icons.date_range_sharp),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
                   value: academic_id,
                   hint: Text("Select Academic Year"),
                   items: academicYears.map((year) {
@@ -62,7 +79,12 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
                       academic_id = value!;
                     });
                   },
+                  validator: (value){
+                    if(value == null) return "Select Academic Year";
+                    return null;
+                  },
                 ),
+                SizedBox(height: 20,),
                 buildTextField("Semester Number", Icons.safety_divider, semesterNumberController),
                 SizedBox(height: 20,),
                 buildDatePicker("Start Date (YYYY-MM-DD)", Icons.hourglass_top_outlined, startDateController),
@@ -70,7 +92,20 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
                 buildDatePicker("End Date (YYYY-MM-DD)", Icons.hourglass_bottom_outlined, endDateController),
 
                 SizedBox(height: 30),
-                ElevatedButton(onPressed: addSemester, child: Text("Add Semester")),
+                ElevatedButton(
+                    onPressed: () async{
+                      if(formKey.currentState!.validate()){
+                        setState(() {
+                          isLoading = true;
+                        });
+                        await addSemester();
+                        setState(() {
+                          isLoading = false;
+                        });
+                        Navigator.pop(context);
+                      }
+                    },
+                    child: isLoading ? CircularProgressIndicator() : Text("Add Semester")),
               ],
             ),
           ),
@@ -93,8 +128,14 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
 
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Semester Added!")));
+      setState(() {
+        isLoading = false;
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add semester")));
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 

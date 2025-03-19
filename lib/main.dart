@@ -85,7 +85,7 @@ class _LoginScreen extends State<LoginScreen> {
     );
 
     int statusCode= await CheckCredentials(username, password,selectedRole);
-    Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
     if(statusCode == 200){
 
       SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -107,8 +107,11 @@ class _LoginScreen extends State<LoginScreen> {
         Navigator.push(context, MaterialPageRoute(builder: (context) => FacultyHomeScreen(username: username)));
       }
     }else{
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Invalid Credentials")));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Invalid Credentials"), backgroundColor: Colors.red),
+        );
+      }
     }
   }
 
@@ -179,12 +182,14 @@ class _LoginScreen extends State<LoginScreen> {
                   if(selectedRole == "Admin")...[
                     buildTextField("Enter Username", Icons.person, usernameController, keyboardType: TextInputType.text),
                     SizedBox(height: 15,),
-                    buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true, keyboardType: TextInputType.number)
+                    buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true,
+                        keyboardType: TextInputType.numberWithOptions(decimal: false, signed: false))
                   ] else
                     ...[
                       buildTextField("Enter Username", Icons.person, usernameController, keyboardType: TextInputType.text),
                       SizedBox(height: 15,),
-                      buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true, keyboardType: TextInputType.number),
+                      buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true,
+                          keyboardType: TextInputType.numberWithOptions(decimal: false, signed: false)),
                     ],
 
                   SizedBox(height: 25,),

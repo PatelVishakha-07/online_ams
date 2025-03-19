@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:online_ams/Modules.dart' ;
 import 'package:flutter/material.dart';
@@ -20,8 +21,7 @@ class _OTPScrState extends State<OTPScreen> {
   final formKey = GlobalKey<FormState>();
   List<dynamic> subjectList = [], yearList = [], divisionList = [];
   late Future<List<dynamic>> facultyDetails;
-  bool isLoadingYear = false;
-  bool isLoadingDivision = false;
+  bool isLoadingYear = false, isLoadingDivision = false, isLoading = false;
   List<String> departmentList = ["BCA", "BBA", "BCOM", "BSC", "MSC", "MCOM"];
   String? facultyDepartment = "", selectedYear, selectedDivision, selectedSubject;
 
@@ -119,7 +119,7 @@ class _OTPScrState extends State<OTPScreen> {
       appBar: AppBar(
         title: Text("Code for Attendance",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)),
         centerTitle: true,
-        backgroundColor: Colors.indigo.shade50,
+        backgroundColor: Colors.pink.shade50,
       ),
       backgroundColor: Colors.pink.shade50,
       body: SingleChildScrollView(
@@ -131,7 +131,7 @@ class _OTPScrState extends State<OTPScreen> {
               child: Column(
                 children: [
 
-                  Text("Department: $facultyDepartment",style: TextStyle(fontSize: 20),),
+                  Text("Department: $facultyDepartment",style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),
 
                   SizedBox(height: 20,),
                   isLoadingYear ? CircularProgressIndicator() :
@@ -162,7 +162,10 @@ class _OTPScrState extends State<OTPScreen> {
                   SizedBox(height: 40,),
                   ElevatedButton(
                       onPressed: () async{
-                        setState(() {});
+                        if(!formKey.currentState!.validate()) return;
+                        setState(() {
+                          isLoading = true;
+                        });
                         Future.delayed(Duration.zero, (){
                           showDialog(
                             context: context,
@@ -198,6 +201,10 @@ class _OTPScrState extends State<OTPScreen> {
                           Navigator.pop(context);
                         }
                         showOtpDialog(otp_code);
+
+                        setState(() {
+                          isLoading = false;
+                        });
 
 
                       },
@@ -295,6 +302,8 @@ class _OTPScrState extends State<OTPScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         icon: Icon(icon)
       ),
+      keyboardType: TextInputType.number,
+      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       validator: (value){
         if(value == null || value.isEmpty)return labelText;
         return null;

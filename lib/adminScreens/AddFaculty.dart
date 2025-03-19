@@ -121,11 +121,11 @@ Widget buildAddSingleRecord(){
     child: Column(
       children: [
 
-        buildTextFormField("Enter First Name",Icons.person,facultyFirstNameController),
+        buildTextFormField("Enter First Name",Icons.person,facultyFirstNameController, keyboardType: TextInputType.name),
         SizedBox(height: 20,),
-        buildTextFormField("Enter Middle Name",Icons.person,facultyMiddleNameController),
+        buildTextFormField("Enter Middle Name",Icons.person,facultyMiddleNameController, keyboardType: TextInputType.name),
         SizedBox(height: 20,),
-        buildTextFormField("Enter Last Name",Icons.person,facultyLastNameController),
+        buildTextFormField("Enter Last Name",Icons.person,facultyLastNameController, keyboardType: TextInputType.name),
         SizedBox(height: 20,),
         buildTextFormField("Enter Contact Number",Icons.contact_page,facultyContactNoController,
         keyboardType: TextInputType.phone, maxLength: 10),
@@ -227,7 +227,8 @@ Future<bool> insertFacultyData() async{
       maxLength: maxLength,
       keyboardType: keyboardType,
       inputFormatters: (keyboardType == TextInputType.phone)
-          ? [FilteringTextInputFormatter.digitsOnly] : null,
+          ? [FilteringTextInputFormatter.digitsOnly] :
+      [FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z ]*$'))],
       decoration: InputDecoration(
         hintText: hintText,prefixIcon: Icon(icon),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
@@ -235,7 +236,13 @@ Future<bool> insertFacultyData() async{
       ),
       validator: (value){
         if (value == null || value.isEmpty) return hintText;
-        if (keyboardType == TextInputType.phone && value.length != 10) return "Contact number must be 10 digits";
+        if (keyboardType == TextInputType.phone) {
+          final RegExp indianNumberRegExp = RegExp(r'^[6789]\d{9}$');
+          if (!indianNumberRegExp.hasMatch(value)) {
+            return "Enter a valid Indian number (10 digits, starts with 6-9)";
+          }
+        }
+
         return null;
       },
     );

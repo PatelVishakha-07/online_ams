@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
@@ -347,6 +348,9 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
         hintText: hintText,prefixIcon: Icon(icon),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
       ),
+      inputFormatters: (inputType == TextInputType.number)
+          ? [FilteringTextInputFormatter.digitsOnly] :
+      [FilteringTextInputFormatter.allow(RegExp(r'^[a-zA-Z ]*$'))],
       validator: (value){
         if(value == null || value.isEmpty) return hintText;
         return null;

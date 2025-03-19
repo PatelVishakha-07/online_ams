@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/AcademicList.dart';
-import 'package:online_ams/adminScreens/AcademicSetup.dart';
 import 'package:online_ams/adminScreens/Faculty.dart';
 import 'package:online_ams/adminScreens/ListDetails.dart';
 import 'package:online_ams/adminScreens/Password.dart';
 import 'package:online_ams/adminScreens/Students.dart';
 import 'package:online_ams/adminScreens/Subject.dart';
 
-var URL="https://69c0-2409-4080-9eb8-6178-4870-2b5f-145-113d.ngrok-free.app";
+var URL="https://7661-2409-4080-9eb8-6178-b9d0-ed84-bab3-c81a.ngrok-free.app";
 
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
