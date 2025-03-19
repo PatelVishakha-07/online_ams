@@ -49,7 +49,7 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
               },
               icon: Icon(Icons.select_all)
           )
-        ]:[],
+        ]: []
       ),
         backgroundColor: Colors.pink.shade50,
         body:Column(

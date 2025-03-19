@@ -21,7 +21,7 @@ class _OTPScrState extends State<OTPScreen> {
   final formKey = GlobalKey<FormState>();
   List<dynamic> subjectList = [], yearList = [], divisionList = [];
   late Future<List<dynamic>> facultyDetails;
-  bool isLoadingYear = false, isLoadingDivision = false, isLoading = false;
+  bool isLoadingYear = false, isLoadingDivision = false, isLoading = false, isLoadingSubject = false;
   List<String> departmentList = ["BCA", "BBA", "BCOM", "BSC", "MSC", "MCOM"];
   String? facultyDepartment = "", selectedYear, selectedDivision, selectedSubject;
 
@@ -30,6 +30,9 @@ class _OTPScrState extends State<OTPScreen> {
 
 
   Future<void> FetchSubjectList() async{
+    setState(() {
+      isLoadingSubject = true;
+    });
     final uri = Uri.parse("$URL/fetchSubject");
     final response = await http.post(
       uri,
@@ -42,8 +45,14 @@ class _OTPScrState extends State<OTPScreen> {
     );
     if(response.statusCode == 200){
       subjectList = json.decode(response.body);
+      setState(() {
+        isLoadingSubject = false;
+      });
     }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch Subject list")));
+      setState(() {
+        isLoadingSubject = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No Subject Found")));
     }
   }
 
@@ -149,6 +158,7 @@ class _OTPScrState extends State<OTPScreen> {
                       id_name: "division_id", name: "division", icon: Icons.splitscreen),
 
                   SizedBox(height: 20,),
+                  isLoadingSubject ? CircularProgressIndicator() :
                   buildDropDownButton(labelText: "Select Subject", items: subjectList, selectedValue: selectedSubject, icon: Icons.subject_outlined,
                       onChanged: (value){ setState(() { selectedSubject=value.toString(); }); },
                       id_name: "subject_id", name: "sub_name"),
@@ -157,7 +167,7 @@ class _OTPScrState extends State<OTPScreen> {
                   buildTextFormField(validTimeController, "Enter valid time (in minutes)", Icons.timer_outlined),
 
                   SizedBox(height: 20,),
-                  buildTextFormField(locationController, "Enter area ", Icons.my_location),
+                  buildTextFormField(locationController, "Enter area (meters)", Icons.my_location),
 
                   SizedBox(height: 40,),
                   ElevatedButton(
@@ -276,7 +286,7 @@ class _OTPScrState extends State<OTPScreen> {
     return DropdownButtonFormField(
       value: items.any((item) => item[id_name] == selectedValue) ? selectedValue : null,
       validator: (value) {
-        if(value == null || value.isEmpty) return "Select $labelText";
+        if(value == null || value.toString().isEmpty) return "Select $labelText";
         return null;
       },
       decoration: InputDecoration(

@@ -176,7 +176,6 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
   }
 
   Future<String> VerifyFace() async{
-    print("---------verify face");
     final uri = Uri.parse(URL+"/compareFace");
     final request = http.MultipartRequest("POST",uri);
     request.files.add(await http.MultipartFile.fromPath("image",capturedPhoto!.path));
