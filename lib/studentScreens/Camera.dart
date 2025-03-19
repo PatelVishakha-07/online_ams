@@ -31,7 +31,7 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
     if(status.isDenied){
       await Permission.camera.request();
     }else if(status.isPermanentlyDenied){
-      openAppSettings();
+      await openAppSettings();
       return;
     }
 
@@ -40,11 +40,16 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
       preferredCameraDevice: CameraDevice.front,
     );
     if(pickedFile != null){
-      setState(() {
-        capturedImage = pickedFile;
-        isLoading = true;
-      });
-      DetectFace();
+      if(mounted){
+        setState(() {
+          capturedImage = pickedFile;
+          isLoading = true;
+        });
+      }
+      await DetectFace();
+    }else{
+      if(mounted){setState(() {});}
+      Navigator.pop(context);
     }
   }
 
@@ -54,16 +59,23 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
     final request = http.MultipartRequest('POST', uri);
     request.files.add(await http.MultipartFile.fromPath('image', capturedImage!.path));
 
-    final response = await request.send();
-    if(response.statusCode == 200){
-      setState(() {
-        SaveImage();
-      });
-    }else {
-      setState(() {
-        isLoading = false;
-        Navigator.pop(context);
-      });
+    try{
+      final response = await request.send();
+      if(response.statusCode == 200){
+        if(mounted){
+          setState(() {
+            SaveImage();
+          });
+        }
+      }else {
+        throw Exception("Face Detection Failed");
+      }
+    }catch(e){
+      if(mounted){
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
 
   }
@@ -75,18 +87,47 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
     request.files.add(await http.MultipartFile.fromPath('image', capturedImage!.path));
     request.fields['username'] = widget.username;
 
-    final response = await request.send();
-    if(response.statusCode == 200){
-      setState(() {
-        isLoading = false;
-      });
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: widget.username)));
-    }else {
-      setState(() {
-        isLoading = false;
-        Navigator.pop(context);
-      });
+    try{
+      final response = await request.send();
+      if(response.statusCode == 200){
+        if(mounted){
+          setState(() {
+            isLoading = false;
+          });
+        }
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: widget.username)));
+      }else {
+        throw Exception("Saving Image Failed");
+        }
+    }catch(e){
+      if(mounted){
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
+  }
+
+  void showErrorDialog(String message) {
+    showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Error",style: TextStyle(color: Colors.red),),
+          content: Text(message),
+          actions: [
+            TextButton(
+                onPressed: (){Navigator.pop(context); },
+                child: Text("OK")
+            ),
+            TextButton(
+                onPressed: (){
+                  CaptureImage();
+                },
+                child: Text("Retry")
+            )
+          ],
+        )
+    );
   }
 
   @override
@@ -141,7 +182,6 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
     }
     final pickedImage = await imagePicker.pickImage(source: ImageSource.camera, preferredCameraDevice: CameraDevice.front);
     if(pickedImage != null){
-      print("----------Captured-------- face");
       setState(() {
         capturedPhoto = pickedImage;
         isProcessing = true;
@@ -163,7 +203,6 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
       return "No Face Scanned";
     }
 
-    print("-------Detect face");
     final uri = Uri.parse(URL+"/detectFace");
     final request = http.MultipartRequest("POST",uri);
     request.files.add(await http.MultipartFile.fromPath("image",capturedPhoto!.path));

@@ -178,7 +178,7 @@ class Attendance{
                           setState(() {
                             isLoading = false; // Stop loading
                           });
-                          Navigator.pop(context, {"msg":msg, "sub_id":subject_id ?? "0"});
+                          Navigator.pop(context, {"msg":msg, "sub_id":subject_id ?? "0", "otp_code":otpCode});
                         }
                       },
                       child: isLoading
@@ -197,21 +197,36 @@ class Attendance{
   }
 
   static Future<dynamic> MarkAttendance(BuildContext context, String student_id, String class_id, String division_id, String subject_id,
-      String semester_id, String academic_year_id) async {
-    final uri = Uri.parse(URL+"/markAttendance");
-    final response = await http.post(
-        uri,
+      String semester_id, String academic_year_id, String otp_code) async {
+
+    final otpUri = Uri.parse(URL+"/fetchOtp_id");
+    final otpResponse = await http.post(
+      otpUri,
       headers: {"Content-Type":"application/json"},
-      body: jsonEncode({
-        "student_id":student_id,
-        "class_id":class_id,
-        "division_id":division_id,
-        "subject_id":subject_id,
-        "semester_id":semester_id,
-        "academic_year_id":academic_year_id
-      })
+      body: jsonEncode({"otp_code": otp_code})
     );
-    return response.statusCode == 200 ? "Marked" : "Not Marked";
+
+    if(otpResponse.statusCode == 200){
+      final otpData = jsonDecode(otpResponse.body);
+      String otpId = otpData["otp_id"];
+      final uri = Uri.parse(URL+"/markAttendance");
+      final response = await http.post(
+          uri,
+          headers: {"Content-Type":"application/json"},
+          body: jsonEncode({
+            "student_id":student_id,
+            "class_id":class_id,
+            "division_id":division_id,
+            "subject_id":subject_id,
+            "semester_id":semester_id,
+            "academic_year_id":academic_year_id,
+            "otp_id":otpId
+          })
+      );
+      return response.statusCode == 200 ? "Marked" : "Not Marked";
+    }else {
+      print("Invalid OTP: ${otpResponse.body}");
+    }
   }
 
   static Future<void> MarkAbsentees(

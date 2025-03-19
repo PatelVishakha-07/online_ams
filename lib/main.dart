@@ -18,7 +18,7 @@ void main() async{
   String? username = sharedPreferences.getString("username");
   String? role = sharedPreferences.getString("role");
 
-  Widget homeScreen;
+  late Widget homeScreen;
   if(isLoggedIn && username != null && role != null){
     if(role == "Admin"){
       homeScreen = AdminScreen();
@@ -85,7 +85,8 @@ class _LoginScreen extends State<LoginScreen> {
     );
 
     int statusCode= await CheckCredentials(username, password,selectedRole);
-    if (mounted) Navigator.pop(context);
+    if (!mounted) return;
+    Widget nextScreen = LoginScreen();
     if(statusCode == 200){
 
       SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
@@ -94,24 +95,26 @@ class _LoginScreen extends State<LoginScreen> {
       await sharedPreferences.setString("role", selectedRole);
 
       if(selectedRole=="Admin"){
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>AdminScreen()));
+        nextScreen = AdminScreen();
       }
       else if(selectedRole == "Student"){
         var value = await FetchImage(username, password);
         if(value){
-            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StudentHomeScreen(username: username,)));
+          nextScreen = StudentHomeScreen(username: username);
         }else{
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => StudentCameraScreen(username: username,)));
+          nextScreen = StudentCameraScreen(username: username);
         }
       }else if(selectedRole == "Faculty") {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => FacultyHomeScreen(username: username)));
+        nextScreen = FacultyHomeScreen(username: username);
       }
+      if(!mounted) return;
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (context) => nextScreen), (route) => false);
     }else{
-      if (mounted) {
+      if (!mounted) return;
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text("Invalid Credentials"), backgroundColor: Colors.red),
         );
-      }
     }
   }
 

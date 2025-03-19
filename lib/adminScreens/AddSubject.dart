@@ -61,26 +61,6 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
     setState(() {
       isLoadingYear = false;
     });
-    /*
-    final uri = Uri.parse(URL + "/fetchYearNameId");
-    final response = await http.post(
-        uri,
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"department": selectedDepartment})
-    );
-    if (response.statusCode == 200) {
-      setState(() {
-        yearList.clear();
-        yearList = json.decode(response.body);
-        isLoadingYear = false;
-      });
-    } else {
-      setState(() {
-        yearList.clear();
-        isLoadingYear = false;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch year list")));
-      });
-    } */
   }
 
   Future<void> FetchAcademicList() async {
@@ -110,10 +90,17 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
       semesterList = await Modules.FetchSemesterList();
 
       setState(() {
-        selectedYear = yearList.firstWhere((year) => year["year"].toString() == sub["year"].toString(), orElse: () => null,)?["class_id"].toString();
-        selectedSemester = semesterList.firstWhere((sem) => sem["semester_id"].toString() == sub["semester_id"].toString(), orElse: () => null,)?["semester_id"].toString();
-        selectedFaculty = facultyList.firstWhere((fac) => fac["faculty_id"].toString() == sub["faculty_id"].toString(), orElse: () => null,)?["faculty_id"].toString();
+        selectedYear = yearList.firstWhere((year) => year["year"].toString() == sub["year"].toString(),
+          orElse: () => null,)?["class_id"].toString();
 
+        selectedSemester = semesterList.firstWhere((sem) => sem["semester_id"].toString() == sub["semester_id"].toString(),
+          orElse: () => null,)?["semester_id"].toString();
+
+        selectedFaculty = facultyList.firstWhere((fac) => fac["faculty_id"].toString() == sub["faculty_id"].toString(),
+          orElse: () => null,)?["faculty_id"].toString();
+
+        selectedAcademicYear = academicList.firstWhere((academic) => academic["academic_year_id"].toString() == sub["academic_year_id"].toString(),
+        orElse: () => null)?["academic_year_id"].toString();
       });
     }
   }

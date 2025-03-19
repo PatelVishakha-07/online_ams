@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
+import 'package:online_ams/facultyScreens/SubjectDetails.dart';
 
 class FacultySubjectList extends StatefulWidget {
   final int faculty_id;
@@ -79,7 +80,11 @@ class _FacultySubjectListState extends State<FacultySubjectList> {
                               child: ListTile(
                                 title: Text(subjects["sub_name"],style: TextStyle(fontWeight: FontWeight.bold,fontSize: 23)),
                                 leading: Icon(Icons.subject_outlined, color: Colors.redAccent,),
-                                subtitle: Text("Code: ${subjects["sub_code"]}"),
+                                subtitle: Text("Code: ${subjects["sub_code"].toString()}"),
+                                onTap: (){
+                                  Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                  SubjectDetailScreen(sub_id: subjects["subject_id"].toString(), subName: subjects["sub_name"])));
+                                },
                               ),
                             ),
                           );

@@ -4,6 +4,7 @@ import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/AddSubject.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
+import 'package:online_ams/facultyScreens/SubjectDetails.dart';
 import 'AddSubject.dart' as addSub;
 
 class SubjectListScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.subjectYear+widget.subjectDepartment + " Subject List",
+        title: Text("    "+ widget.subjectYear+widget.subjectDepartment + " \nSubject List",
             style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)),
         centerTitle: true,
         backgroundColor: Colors.pink.shade50,
@@ -112,6 +113,9 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                                           selectedIndexes.add(index);
                                         }
                                       });
+                                    }else{
+                                      Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                          SubjectDetailScreen(sub_id: item["subject_id"].toString(), subName: item["sub_name"])));
                                     }
                                   },
                                   onLongPress: (){

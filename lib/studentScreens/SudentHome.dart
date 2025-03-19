@@ -29,18 +29,11 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   String? stdDept, stdYear, stdDiv, stdName, stdContact, stdDob, stdRollNo;
   String? classId, divId, semester_id, academic_year_id;
   late List<dynamic> subjectList =[], semesterList =[], yearList=[], academicYearList=[];
-  bool isLoadingYear = false, isLoadingSemester = false, isLoadingAcademicYear = false,  isLoading = false;
+  bool isLoadingSemester = false,  isLoading = false;
   String? selectedSubject, fromDate = "", toDate ="", selectedSemester = "", selectedYear = "", selectedAcademicYear = "";
   TextEditingController fromDateController = TextEditingController(), toDateController = TextEditingController();
 
   void FetchDetails() async{
-
-    setState(() {
-      isLoadingAcademicYear = true;
-      isLoadingYear = true;
-      isLoadingSemester = true;
-    });
-
     student_id  = await Modules.FetchId(widget.username,"Student");
     List<dynamic> values = await Modules.FetchSingleData("Student", student_id: student_id.toString());
     if(values.isNotEmpty) {
@@ -56,25 +49,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         divId = values[0]["division_id"].toString();
         semester_id = values[0]["semester_id"].toString();
         academic_year_id = values[0]["academic_year_id"].toString();
-      });
-
-      academicYearList = await Modules.FetchAcademicYearList();
-      yearList = await Modules.FetchYear(stdDept!);
-      semesterList = await Modules.FetchSemesterList();
-      subjectList = await Modules.FetchSubjectList(semester_id: semester_id, role: "Attendance_Report", year: stdYear, dept: stdDept);
-
-      setState(() {
-        isLoadingAcademicYear = false;
-        isLoadingYear = false;
-        isLoadingSemester = false;
-      });
-
-    }else {
-      // If no student details found, stop loading
-      setState(() {
-        isLoadingAcademicYear = false;
-        isLoadingYear = false;
-        isLoadingSemester = false;
       });
     }
   }
@@ -204,12 +178,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               stdDept!, stdYear!, divId!, classId!);
                           String subject_id = result["sub_id"] ?? "0";
                           String status = result["msg"];
+                          String otp_code = result["otp_code"];
 
                           if(status == "Valid"){
                             String msg = await Navigator.push(context, MaterialPageRoute(builder: (context) => AttendanceCameraScreen(student_id: student_id.toString())));
                             if(msg == "Face Matched"){
                               String option = await Attendance.MarkAttendance(context, student_id.toString(), classId.toString(),
-                                  divId.toString(), subject_id ,semester_id.toString(), academic_year_id.toString());
+                                  divId.toString(), subject_id ,semester_id.toString(), academic_year_id.toString(),otp_code);
 
                               if(option == "Marked"){
                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Attendance marked successfully")));
@@ -247,9 +222,32 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
 
   void showAttendanceReportDialog(BuildContext context) {
-    setState(() {
-      isLoadingAcademicYear = false;
-    });
+
+    bool isLoadingAcademicYear = true, isLoadingYear = true;
+    bool hasFetchedAcademicYears = false, hasFetchedYearList = false;
+    List academicYearList = [];
+    List yearList = [];
+
+    Future<void> fetchAcademicYears(StateSetter setState) async {
+      if (hasFetchedAcademicYears) return; // Prevent multiple API calls
+      hasFetchedAcademicYears = true;
+
+      List data = await Modules.FetchAcademicYearList();
+      setState(() {
+        academicYearList = data;
+        isLoadingAcademicYear = false;
+      });
+    }
+
+    Future<void> fetchYearList(StateSetter setState) async{
+      if(hasFetchedYearList) return;
+      hasFetchedYearList = true;
+      List data = await Modules.FetchYear(stdDept.toString());
+      setState((){
+        yearList = data;
+        isLoadingYear = false;
+      });
+    }
 
     showDialog(
         barrierDismissible: false,
@@ -257,6 +255,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         builder: (context) {
           return StatefulBuilder(
               builder: (context, setState){
+                if (isLoadingAcademicYear) {
+                  fetchAcademicYears(setState);
+                }
+                if(isLoadingYear){
+                  fetchYearList(setState);
+                }
                 return AlertDialog(
                   elevation: 4,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
@@ -272,54 +276,35 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           onChanged: (value) async{
                             setState(() {
                               selectedAcademicYear = value;
-                              selectedYear = null;  // Reset year selection
-                              selectedSemester = null;  // Reset semester selection
-                              selectedSubject = null;  // Reset subject selection
-                              semesterList = []; // Clear old data
-                              subjectList = [];
-                              isLoadingSemester = true;
                             });
                             List newSemesterList = await Modules.FetchSemesterList(academicYearId: selectedAcademicYear);
                             setState(() {
                               semesterList = newSemesterList.toSet().toList();
-                              selectedSemester = null;  // Reset semester AFTER loading
+                              selectedSemester = null;
                               isLoadingSemester = false;
-
-                              if (!semesterList.any((item) => item["semester_id"] == selectedSemester)) {
-                                selectedSemester = null;
-                              }
-
                             });
                           }, id_name: "academic_year_id", name: "academic_year", isLoading: isLoadingAcademicYear,),
 
                         SizedBox(height: 20,),
                         buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: selectedYear,
                             onChanged: (value) async{
+                          print("==========$value");
                               setState(() {
-                                selectedYear = value;
-                                selectedSemester = null; // Reset semester
-                                selectedSubject = null; // Reset subject
-                                semesterList = [];
-                                subjectList = [];
+                                selectedYear = value.toString();
                               });
                             }, id_name: "class_id", name: "year"),
 
                         SizedBox(height: 20,),
                         buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue: selectedSemester,
                             onChanged: (value) async{
+                          print("sem year =========$selectedYear");
                               setState(() {
                                 selectedSemester = value;
-                                selectedSubject = null;
-                                subjectList = [];
                               });
-                              List newSubjectList = await Modules.FetchSubjectList(role: "Attendance Report", dept: stdDept ?? "",
+                              List newSubjectList = await Modules.FetchSubjectList(role: "Attendance_Report", dept: stdDept ?? "",
                                   year: selectedYear, semester_id: selectedSemester);
                               setState(() {
                                 subjectList = newSubjectList.toSet().toList();
-                                selectedSubject = value;
-                                if (!subjectList.any((item) => item["subject_id"] == selectedSubject)) {
-                                  selectedSubject = null;
-                                }
                               });
                             }, id_name: "semester_id", name: "semester_number", isLoading: isLoadingSemester),
 
@@ -382,7 +367,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   Widget buildDropDownButton({required String labelText, required List<dynamic> items, bool isLoading = false,
     required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name, required String? name }) {
     return DropdownButtonFormField(
-      value: items.any((item) => item[id_name] == selectedValue) ? selectedValue ?? "" : null,
+      value: items.any((item) => item[id_name].toString() == selectedValue.toString()) ? selectedValue.toString() ?? "" : null,
       validator: (value) {
         if(value == null) return "Please select $labelText";
         return null;

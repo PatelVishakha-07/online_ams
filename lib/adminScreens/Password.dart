@@ -75,7 +75,7 @@ class _PasswordListScreenState extends State<PasswordListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Password List",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+        title: Text("     ${widget.role} \nPassword List",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
         centerTitle: true,
         backgroundColor: Colors.pink[50],
       ),

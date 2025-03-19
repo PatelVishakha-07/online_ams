@@ -1,12 +1,14 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
 
 class AttendanceReportScreen extends StatefulWidget {
   final String student_id, subName, semesterNo, year, class_id, subject_id, semester_id, to_date, from_date;
+
   const AttendanceReportScreen({super.key, required this.subName, required this.student_id, required this.subject_id,
   required this.year, required this.semesterNo, required this.class_id, required this.semester_id, required this.from_date,
   required this.to_date});
@@ -107,7 +109,9 @@ class _AttendanceReportScreenState extends State<AttendanceReportScreen> {
                   itemBuilder: (context, index) {
                     final entry = attendanceData[index];
                     return ListTile(
-                      title: Text("📅 ${entry['attendance_date']}"),
+                      title: Text("📅 ${DateFormat('yyyy-MM-dd').format(
+                          DateFormat("EEE, dd MMM yyyy HH:mm:ss 'GMT'").parse(entry['attendance_date'], true)
+                      )} ${entry["attendance_time"]}"),
                       trailing: Text(
                         entry["status"],
                         style: TextStyle(
