@@ -21,10 +21,11 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   TextEditingController subjectCodeController = TextEditingController();
   String? selectedDepartment, selectedYear, selectedAcademicYear, selectedSemester, yearName;
   var selectedFaculty;
-  List<dynamic> academicYearList = [], semesterList = [], yearList = [], academicList = [];
+  List<dynamic> academicYearList = [], semesterList = [], yearList = [], academicList = [], divList = [];
   final List<String> deptList = ["BCA", "BBA", "BCOM", "BSC"];
-  late List<dynamic> facultyList=[];
-  bool isLoadingFaculty = false, isLoadingYear = false, isLoadingAcademic = false, isLoadingSemester = false, isLoading = false;
+  List<dynamic> facultyList=[], selectedFaculties = [];
+  bool isLoadingFaculty = false, isLoadingYear = false, isLoadingAcademic = false, isLoadingSemester = false,
+      isLoading = false, isLoadingDivision = false;
 
   Future<void> FetchFacultyList() async {
     if (selectedDepartment == null) return;
@@ -63,6 +64,30 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
     });
   }
 
+  Future<void> FetchDivision() async{
+    final uri = Uri.parse(URL + "/fetchDivision");
+    final response = await http.post(
+        uri,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"class_id": selectedYear})
+    );
+    if(response.statusCode == 200){
+      var availableDivisions = jsonDecode(response.body);
+      if(availableDivisions != null){
+        setState(() {
+          divList = availableDivisions;
+          selectedFaculties = List.filled(divList.length, null);
+        });
+      }
+    }else{
+      setState(() {
+        divList = [];
+        selectedFaculties = [];
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No Divisions are allocated to this Class")));
+    }
+  }
+
   Future<void> FetchAcademicList() async {
     setState(() {
       academicList.clear();
@@ -75,34 +100,50 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
   }
 
   Future<void> GetOldSubjectDetails() async{
-    List<dynamic> subList = await Modules.FetchSubjectList(role: "Subject",subject_id: widget.sub_id);
-    var sub = subList.firstWhere((s) => s["subject_id"].toString() == widget.sub_id.toString(), orElse:  () => null);
-    if(sub != null){
+    final uri = Uri.parse(URL + "/fetchSingleRecord");
+    final response = await http.post(uri,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "role": "Subject",
+          "subject_id":widget.sub_id
+        })
+    );
+
+    if (response.statusCode == 200) {
+      Map<String, dynamic> subList = json.decode(response.body);
       setState(() {
-        subjectNameController.text = sub["sub_name"];
-        subjectCodeController.text = sub["sub_code"].toString();
-        selectedDepartment = sub["department"];
+        subjectNameController.text = subList["sub_name"] ?? "";
+        subjectCodeController.text = subList["sub_code"].toString();
+        selectedDepartment = subList["department"];
+        selectedYear =subList["semester_id"].toString();
+        selectedAcademicYear = subList["academic_year_id"].toString();
+        selectedSemester = subList["semester_id"].toString();
+        selectedFaculties = subList["faculty_list"] ?? [];
 
       });
+      await FetchAcademicList();
       await FetchYearList();
+      semesterList= await Modules.FetchSemesterList(academicYearId: selectedAcademicYear.toString());
+      await FetchDivision();
       await FetchFacultyList();
-      academicList = await Modules.FetchAcademicYearList();
-      semesterList = await Modules.FetchSemesterList();
+      List<dynamic> oldFacultyList = subList["faculty_list"] ?? [];
+      setState(() {
+        selectedFaculties = List.filled(divList.length, null);
+        for(var oldFaculty in oldFacultyList){
+          int divIndex = divList.indexWhere((div) => div["division_id"] == oldFaculty["division_id"]);
+          if(divIndex != -1){
+            selectedFaculties[divIndex] = oldFaculty["faculty_id"].toString();
+          }
+        }
+      });
 
       setState(() {
-        selectedYear = yearList.firstWhere((year) => year["year"].toString() == sub["year"].toString(),
-          orElse: () => null,)?["class_id"].toString();
-
-        selectedSemester = semesterList.firstWhere((sem) => sem["semester_id"].toString() == sub["semester_id"].toString(),
-          orElse: () => null,)?["semester_id"].toString();
-
-        selectedFaculty = facultyList.firstWhere((fac) => fac["faculty_id"].toString() == sub["faculty_id"].toString(),
-          orElse: () => null,)?["faculty_id"].toString();
-
-        selectedAcademicYear = academicList.firstWhere((academic) => academic["academic_year_id"].toString() == sub["academic_year_id"].toString(),
-        orElse: () => null)?["academic_year_id"].toString();
+        isLoading = false;
       });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to fetch subject details")));
     }
+    setState(() => isLoading = false);
   }
 
   @override
@@ -187,6 +228,12 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                     onChanged: (value) async{
                   setState(() {
                     selectedYear = value;
+                    isLoadingDivision = true;
+                  });
+                  FetchDivision();
+                  selectedFaculties = List.filled(divList.length, null);
+                  setState(() {
+                    isLoadingDivision = false;
                   });
                 },id_name: "class_id", name: "year"),
 
@@ -201,13 +248,19 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
 
                 SizedBox(height: 20,),
 
-                isLoadingFaculty ? CircularProgressIndicator():
-                buildDropDownButton(labelText: "Please select Faculty", items: facultyList, selectedValue: selectedFaculty,
-                    onChanged: (value){
-                          setState(() {
-                            selectedFaculty = value;
-                          });
-                        }, id_name: "faculty_id", name: "faculty_name"),
+                isLoadingDivision ? CircularProgressIndicator() :
+                    Column(
+                      children: List.generate(divList.length, (index){
+                        return Padding(
+                          padding: EdgeInsets.symmetric(vertical: 15),
+                          child: buildDropDownButton(labelText: "Select Faculty for Division ${divList[index]["division"]}",
+                              items: facultyList, selectedValue: selectedFaculties[index].toString(),
+                              onChanged: (value){
+                            selectedFaculties[index] = value;
+                              }, id_name: "faculty_id", name: "faculty_name")
+                        );
+                      }),
+                    ),
 
                 SizedBox(height: 25,),
                 ElevatedButton(
@@ -217,11 +270,11 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                       if (widget.option == "Add Subject") {
                         if(formKey.currentState!.validate()){
                           SaveSubject();
-                          //Navigator.pop(context);
                         }
                       } else if (widget.option == "Update Subject") {
-                        UpdateSubject();
-                       // Navigator.pop(context);
+                        if(formKey.currentState!.validate()){
+                          UpdateSubject();
+                        }
                       }
                     },
                     child: widget.option == "Add Subject" ? Text("Add",
@@ -278,21 +331,25 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
           "subject_code":subjectCode,
           "subject_department":selectedDepartment,
           "class_id":selectedYear,
-          "faculty_id":selectedFaculty,
+          //"faculty_id":selectedFaculty,
           "academic_year_id": selectedAcademicYear,
-          "semester_id": selectedSemester
+          "semester_id": selectedSemester,
+          "faculties_list":List.generate(divList.length, (index) =>{
+            "division_id":divList[index]["division_id"],
+            "faculty_id":facultyList[index]
+          })
         })
     );
     if(response.statusCode == 200){
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Subject Added Successfully")));
-
-    }else{
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Add Subject")));
-    }
-    if (mounted) {
+      if (mounted) {
+        setState(() => isLoading = false);
+        Navigator.pop(context);
+      }
+    }else {
       setState(() => isLoading = false);
-      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Add Subject")));
     }
   }
 
@@ -300,6 +357,16 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
     if (mounted) setState(() => isLoading = true);
     String subjectName = subjectNameController.text.toString();
     String subjectCode = subjectCodeController.text.toString();
+
+    List<Map<String,dynamic>> assignedFaculty = [];
+    for(int i=0; i < divList.length; i++){
+      if(selectedFaculties[i] != null){
+        assignedFaculty.add({
+          "division_id":divList[i]["division_id"],
+          "faculty_id":selectedFaculties[i]
+        });
+      }
+    }
 
     final uri=Uri.parse(URL+"/updateSubject");
     final response = await http.post(
@@ -310,22 +377,25 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
           "subject_name":subjectName,
           "subject_code":subjectCode,
           "subject_department":selectedDepartment,
-          "faculty_id":selectedFaculty,
           "semester_id": selectedSemester,
-          "class_id":selectedYear
+          "class_id":selectedYear,
+          "faculty_list":assignedFaculty
         })
     );
     if(response.statusCode == 200){
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Subject Details Updated Successfully")));
-
+      if (mounted) {
+        setState(() => isLoading = false);
+        Navigator.pop(context);
+      }
     }else{
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Update Subject Details")));
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
-    if (mounted) {
-      setState(() => isLoading = false);
-      Navigator.pop(context);
-    }
+
   }
 
   Widget buildTextFormField(String hintText,IconData icon,TextEditingController controller,TextInputType inputType){

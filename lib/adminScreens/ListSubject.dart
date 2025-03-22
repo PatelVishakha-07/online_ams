@@ -5,7 +5,6 @@ import 'package:online_ams/adminScreens/AddSubject.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
 import 'package:online_ams/facultyScreens/SubjectDetails.dart';
-import 'AddSubject.dart' as addSub;
 
 class SubjectListScreen extends StatefulWidget {
   final String subjectDepartment, subjectYear, role;
@@ -20,7 +19,6 @@ class SubjectListScreen extends StatefulWidget {
 class _SubjectListScreenState extends State<SubjectListScreen> {
 
   late Future<List<dynamic>> subjectList;
-  Set<int> selectedIndexes={};
   int totalIndex=0;
 
   @override
@@ -37,20 +35,6 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
             style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25)),
         centerTitle: true,
         backgroundColor: Colors.pink.shade50,
-        actions: selectedIndexes.isNotEmpty?[
-          IconButton(
-              onPressed: (){
-                setState(() {
-                  if(selectedIndexes.length == totalIndex){
-                    selectedIndexes.clear();
-                  }else{
-                    selectedIndexes=Set<int>.from(List.generate(totalIndex, (i) => i));
-                  }
-                });
-              },
-              icon: Icon(Icons.select_all)
-          )
-        ]: []
       ),
         backgroundColor: Colors.pink.shade50,
         body:Column(
@@ -68,7 +52,6 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                           itemCount: totalIndex,
                           itemBuilder: (context,index){
                             var item=snapshot.data![index];
-                            bool isSelected=selectedIndexes.contains(index);
                             return Padding(
                               padding: const EdgeInsets.all(12.0),
                               child: Card(
@@ -94,32 +77,31 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
                                           )
                                         ],
                                         icon: Icon(Icons.more_vert),
-                                        onSelected: (value)=>{
+                                        onSelected: (value) async{
                                           if(value == "update"){
-                                            Navigator.push(context, MaterialPageRoute(builder: (context) =>
-                                                AddSubjectScreen(option: "Update Subject", sub_id: item["subject_id"].toString())))
+                                           await Navigator.push(context, MaterialPageRoute(builder: (context) =>
+                                                AddSubjectScreen(option: "Update Subject", sub_id: item["subject_id"].toString())));
+                                            setState(() {
+                                              subjectList=Modules.FetchSubjectList(role: widget.role, dept: widget.subjectDepartment,year: widget.subjectYear);
+                                            });
                                           }
-                                          else if(value == "Delete"){}
+                                          else if(value == "delete"){
+                                            bool confirmDelete= await ShowSubDeleteDialog(context,
+                                                "Are You Sure You want to Delete Subject?", "Delete Subject");
+                                            if(confirmDelete){
+                                              Modules.DeleteData(context,option: "Subject", subject_id: item["subject_id"].toString());
+                                            }
+                                            setState(() {
+                                              subjectList=Modules.FetchSubjectList(role: widget.role, dept: widget.subjectDepartment,year: widget.subjectYear);
+                                            });
+                                          }
                                         },
                                       )
                                     ],
                                   ),
                                   onTap: (){
-                                    if(selectedIndexes.isNotEmpty) {
-                                      setState(() {
-                                        if(isSelected){
-                                          selectedIndexes.remove(index);
-                                        }else{
-                                          selectedIndexes.add(index);
-                                        }
-                                      });
-                                    }else{
                                       Navigator.push(context, MaterialPageRoute(builder: (context) =>
                                           SubjectDetailScreen(sub_id: item["subject_id"].toString(), subName: item["sub_name"])));
-                                    }
-                                  },
-                                  onLongPress: (){
-                                    selectedIndexes.add(index);
                                   },
                                 ),
                               ),
@@ -133,6 +115,26 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
 
     );
   }
+
+  Future<bool> ShowSubDeleteDialog(BuildContext context, String content, String title) async{
+    return  await showDialog<bool>(
+      barrierDismissible: false,
+        context: context,
+        builder: (context) =>
+            AlertDialog(
+              title: Text(title),
+              content: Text(content),
+              actions: [
+                TextButton(onPressed: () => Navigator.pop(context, false), child: Text("Cancel")),
+                TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: Text("Remove", style: TextStyle(color: Colors.red))
+                ),
+              ],
+            )
+    ) ?? false;
+  }
+
 }
 
 class YearScreen extends StatefulWidget {

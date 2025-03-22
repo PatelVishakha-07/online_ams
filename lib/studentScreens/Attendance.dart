@@ -24,7 +24,7 @@ class Attendance{
     if(response.statusCode == 200){
       return json.decode(response.body);
     }
-    return null;
+    return "not in valid area";
   }
 
   // FUNCTION TO VERIFY STUDENT LOCATION
@@ -94,6 +94,7 @@ class Attendance{
     Future<List<dynamic>> subjectList = Modules.FetchSubjectList(dept: department, role: "Student", year: year);
     TextEditingController codeController = TextEditingController();
     return await showDialog(
+      barrierDismissible: false,
         context: context,
         builder: (context){
           return StatefulBuilder(
@@ -178,7 +179,8 @@ class Attendance{
                           setState(() {
                             isLoading = false; // Stop loading
                           });
-                          Navigator.pop(context, {"msg":msg, "sub_id":subject_id ?? "0", "otp_code":otpCode});
+                          print("--------------------$msg");
+                          Navigator.pop(context, {"msg":msg, "sub_id":subject_id ?? "0", "otp_code":otpCode.toString()});
                         }
                       },
                       child: isLoading
@@ -208,7 +210,7 @@ class Attendance{
 
     if(otpResponse.statusCode == 200){
       final otpData = jsonDecode(otpResponse.body);
-      String otpId = otpData["otp_id"];
+      String otpId = otpData["otp_id"].toString();
       final uri = Uri.parse(URL+"/markAttendance");
       final response = await http.post(
           uri,
@@ -226,6 +228,7 @@ class Attendance{
       return response.statusCode == 200 ? "Marked" : "Not Marked";
     }else {
       print("Invalid OTP: ${otpResponse.body}");
+      return "Not Marked";
     }
   }
 

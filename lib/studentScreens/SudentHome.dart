@@ -75,7 +75,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
       setState(() {
         isLoading = false;
       });
-      // Optionally handle errors here
       debugPrint("Failed to fetch image: ${response.statusCode}");
     }
   }
@@ -178,13 +177,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               stdDept!, stdYear!, divId!, classId!);
                           String subject_id = result["sub_id"] ?? "0";
                           String status = result["msg"];
-                          String otp_code = result["otp_code"];
+                          String otp_code = result["otp_code"].toString();
 
                           if(status == "Valid"){
                             String msg = await Navigator.push(context, MaterialPageRoute(builder: (context) => AttendanceCameraScreen(student_id: student_id.toString())));
                             if(msg == "Face Matched"){
                               String option = await Attendance.MarkAttendance(context, student_id.toString(), classId.toString(),
-                                  divId.toString(), subject_id ,semester_id.toString(), academic_year_id.toString(),otp_code);
+                                  divId.toString(), subject_id ,semester_id.toString(), academic_year_id.toString(),otp_code.toString());
 
                               if(option == "Marked"){
                                 ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Attendance marked successfully")));
@@ -201,6 +200,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           }
                           else if(status == "Invalid"){
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("OTP Code is Not Valid")));
+                          }
+                          else if(status == "You are not in the allowed area!"){
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("You are not in the allowed area!")));
+                          }
+                          else if(status == "Time to Mark Attendance is Over."){
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Time to Mark Attendance is Over.")));
                           }
                           else if(status == "Attendance Already Marked"){
                             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Attendance is Already Marked for this lecture")));
@@ -223,10 +228,19 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
   void showAttendanceReportDialog(BuildContext context) {
 
+    selectedAcademicYear = null;
+    selectedYear = null;
+    selectedSemester = null;
+    selectedSubject = null;
+    fromDateController.clear();
+    toDateController.clear();
+
     bool isLoadingAcademicYear = true, isLoadingYear = true;
     bool hasFetchedAcademicYears = false, hasFetchedYearList = false;
     List academicYearList = [];
     List yearList = [];
+    semesterList = [];
+    subjectList = [];
 
     Future<void> fetchAcademicYears(StateSetter setState) async {
       if (hasFetchedAcademicYears) return; // Prevent multiple API calls
@@ -288,7 +302,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         SizedBox(height: 20,),
                         buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: selectedYear,
                             onChanged: (value) async{
-                          print("==========$value");
                               setState(() {
                                 selectedYear = value.toString();
                               });
@@ -297,7 +310,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         SizedBox(height: 20,),
                         buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue: selectedSemester,
                             onChanged: (value) async{
-                          print("sem year =========$selectedYear");
                               setState(() {
                                 selectedSemester = value;
                               });
@@ -354,6 +366,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                   subject_id: selectedSubject.toString(), year:selectedYearName.toString(), semesterNo: selectedSemesterNo.toString(),
                                   class_id: selectedYear.toString(), semester_id: selectedSemester.toString(),
                                   from_date: fromDate.toString(), to_date: toDate.toString())));
+
+
                         },
                         child: Text("Submit")
                     )

@@ -17,23 +17,21 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
 
   Future<dynamic>? academicList;
 
-  Future<void> FetchAcademic() async{
-      academicList =await Modules.FetchAcademicYearList();
-  }
-
   @override
   void initState() {
     super.initState();
-    //FetchAcademic();
     academicList = Modules.FetchAcademicYearList();
   }
 
   void showAcademicAddDialog() {
-    String academicYear = "";
+    bool isAcademicYearAdded = false;
     final TextEditingController academicYearController = TextEditingController();
     final formKey = GlobalKey<FormState>();
 
     Future<void> addAcademicYear() async {
+      setState(() {
+        isAcademicYearAdded = true;
+      });
       var response = await http.post(
         Uri.parse("$URL/addAcademicYear"),
         headers: {"Content-Type": "application/json"},
@@ -42,9 +40,16 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Academic Year Added!")));
-        FetchAcademic();
-        setState(() {});
+        setState(() {
+          isAcademicYearAdded = false;
+          academicList = Modules.FetchAcademicYearList();
+        });
+        Navigator.pop(context);
       } else {
+        setState(() {
+          isAcademicYearAdded = false;
+        });
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add academic year")));
       }
     }
@@ -86,8 +91,7 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
                 await addAcademicYear();
               }
               setState(() {});
-              Navigator.pop(context);
-            } , child: Text("Add")),
+            } , child: isAcademicYearAdded ? CircularProgressIndicator() : Text("Add")),
           ],
         )
     );

@@ -16,8 +16,6 @@ class AcademicSetupScreen extends StatefulWidget {
 class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
 
   final TextEditingController semesterNumberController = TextEditingController();
-  final TextEditingController startDateController = TextEditingController();
-  final TextEditingController endDateController = TextEditingController();
   final formKey = GlobalKey<FormState>();
   int? academic_id;
   bool isLoading = false, isLoadingAcademic = false;
@@ -87,11 +85,6 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
                 SizedBox(height: 20,),
                 buildTextField("Semester Number", Icons.safety_divider, semesterNumberController),
                 SizedBox(height: 20,),
-                buildDatePicker("Start Date (YYYY-MM-DD)", Icons.hourglass_top_outlined, startDateController),
-                SizedBox(height: 20),
-                buildDatePicker("End Date (YYYY-MM-DD)", Icons.hourglass_bottom_outlined, endDateController),
-
-                SizedBox(height: 30),
                 ElevatedButton(
                     onPressed: () async{
                       if(formKey.currentState!.validate()){
@@ -121,8 +114,6 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
       body: jsonEncode({
         "academic_year_id": academic_id,
         "semester_no": int.tryParse(semesterNumberController.text),
-        "start_date": startDateController.text,
-        "end_date": endDateController.text,
       }),
     );
 
@@ -157,40 +148,4 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
       },
     );
   }
-
-  Widget buildDatePicker(String hintText, IconData leadingIcon, TextEditingController controller) {
-    return TextFormField(
-      controller: controller,
-      readOnly: true, // Prevent manual input
-      decoration: InputDecoration(
-        hintText: hintText,
-        prefixIcon: Icon(leadingIcon, color: Colors.redAccent),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        filled: true,
-        fillColor: Colors.grey.shade200,
-      ),
-      onTap: () async {
-        DateTime? pickedDate = await showDatePicker(
-          context: context,
-          initialDate: DateTime.now(),
-          firstDate: DateTime(2000),
-          lastDate: DateTime(2100),
-        );
-        if (pickedDate != null) {
-          String formattedDate = pickedDate.toString().split(" ")[0]; // Format: YYYY-MM-DD
-          setState(() {
-            controller.text = formattedDate;
-          });
-        }
-      },
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return "Please select a date";
-        }
-        return null;
-      },
-    );
-  }
-
-
 }

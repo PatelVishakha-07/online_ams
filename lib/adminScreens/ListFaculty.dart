@@ -86,7 +86,7 @@ class _FacultyListScreenState extends State<FacultyListScreen> {
                 if(confirmDelete){
                   for(int index in selectedIndexes){
                     var item = filteredFaculty[index];
-                    await Modules.DeleteData(context,option: "Faculty", faculty_id: item["faculty_id"]);
+                    await Modules.DeleteData(context,option: "Faculty", faculty_id: item["faculty_id"].toString());
                   }
                   setState(() {
                     selectedIndexes.clear();
@@ -185,11 +185,7 @@ class _FacultyListScreenState extends State<FacultyListScreen> {
                                             )
                                     );
                                     if (confirmDelete) {
-                                      List<dynamic> facultyData = await facultyList;
-                                      for (int index in selectedIndexes) {
-                                        var item = facultyData[index];
-                                        await Modules.DeleteData(context, option: "Faculty", faculty_id: item["faculty_id"].toString());
-                                      }
+                                      await Modules.DeleteData(context, option: "Faculty", faculty_id: item["faculty_id"].toString());
                                       setState(() {
                                         selectedIndexes.clear();
                                         FetchFaculty();

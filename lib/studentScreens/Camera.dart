@@ -5,9 +5,7 @@ import 'package:camera/camera.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
-import 'package:online_ams/studentScreens/Attendance.dart';
 import 'package:online_ams/studentScreens/SudentHome.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -26,7 +24,7 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
   bool isLoading = false;
 
   Future<void> CaptureImage() async{
-
+    await ShowWarningDialog(context);
     var status = await Permission.camera.request();
     if(status.isDenied){
       await Permission.camera.request();
@@ -110,6 +108,7 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
 
   void showErrorDialog(String message) {
     showDialog(
+      barrierDismissible: false,
         context: context,
         builder: (context) => AlertDialog(
           title: Text("Error",style: TextStyle(color: Colors.red),),
@@ -133,7 +132,15 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
   @override
   void initState() {
     super.initState();
-    CaptureImage();
+    //CaptureImage();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CaptureImage();
+    });
   }
 
   @override
@@ -168,11 +175,20 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
   bool isProcessing = false;
   @override
   void initState() {
-    CaptureFace();
+    //CaptureFace();
     super.initState();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      CaptureFace();
+    });
+  }
+
   Future<dynamic> CaptureFace() async{
+    await ShowWarningDialog(context);
     var status = await Permission.camera.request();
     if(status.isDenied){
       await Permission.camera.request();
@@ -246,6 +262,24 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
       ),
     );
   }
+}
+
+Future<void> ShowWarningDialog(BuildContext context) async{
+  await showDialog(
+    barrierDismissible: false,
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Warning!!!"),
+        content: Text("Please remove spectacles or goggles or mask before capturing image"),
+        icon: Icon(Icons.warning_amber_outlined, color: Colors.red,),
+        actions: [
+          TextButton(
+              onPressed: (){Navigator.pop(context); },
+              child: Text("OK")
+          )
+        ],
+      )
+  );
 }
 
 

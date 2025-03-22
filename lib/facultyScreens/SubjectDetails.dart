@@ -14,7 +14,7 @@ class SubjectDetailScreen extends StatefulWidget {
 
 class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
 
-  List<dynamic> subList = [];
+  List<dynamic> subList = [], faculty_List = [];
   bool isSubjectLoading = false;
   String subject_name = "", sub_code = "", subYear ="", subSemester = "", subDepartment = "", faculty_name ="";
 
@@ -29,16 +29,20 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
       body: jsonEncode({"subject_id":widget.sub_id, "role":"Subject"})
     );
     if(response.statusCode == 200){
-      subList = jsonDecode(response.body);
+      var subjectData = jsonDecode(response.body);
       setState(() {
         isSubjectLoading = false;
-        var subject = subList.firstWhere((sub) => sub["subject_id"].toString() == widget.sub_id, orElse: () => null);
-        subject_name = subject["sub_name"];
-        sub_code = subject["sub_code"].toString();
-        subYear = subject["year"];
-        subSemester = subject["semester_no"].toString();
-        faculty_name = subject["faculty_name"];
-        subDepartment = subject["department"];
+        //var subject = subList.firstWhere((sub) => sub["subject_id"].toString() == widget.sub_id, orElse: () => null);
+        subject_name = subjectData["sub_name"];
+        sub_code = subjectData["sub_code"].toString();
+        subYear = subjectData["year"];
+        subSemester = subjectData["semester_no"].toString();
+        subDepartment = subjectData["department"];
+
+        faculty_List = subjectData["faculty_list"].map((faculty) => {
+          "faculty_name":faculty["faculty_name"],
+          "division":faculty["division"].toString()
+        }).toList();
       });
     }else{
       setState(() {
@@ -84,7 +88,19 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
                       buildDetailRow("Department", subDepartment),
                       buildDetailRow("Year", subYear),
                       buildDetailRow("Semester", subSemester),
-                      buildDetailRow("Faculty", faculty_name, isBold: true),
+
+                      faculty_List.isNotEmpty ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text("Faculty: ",style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),),
+                          SizedBox(height: 10,),
+                          ... faculty_List.map((faculty) => Padding(
+                              padding: EdgeInsets.symmetric(vertical: 4),
+                            child: Text("Division ${faculty["division"]}: ${faculty["faculty_name"]}",
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Colors.black54),),
+                          ))
+                        ],
+                      ) : buildDetailRow("Faculty", "N/A"),
                       SizedBox(height: 20,),
                     ]
                 ),
