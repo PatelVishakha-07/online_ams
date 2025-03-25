@@ -23,7 +23,30 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
     academicList = Modules.FetchAcademicYearList();
   }
 
-  void showAcademicAddDialog() {
+  void validateAndShowAcademicDialog() {
+    int current_month = DateTime.now().month;
+    int current_year = DateTime.now().year;
+    String expected_year = "$current_year-${current_year + 1}";
+
+    if (current_month != 6) {
+      showDialog(
+        barrierDismissible: false,
+        context: context,
+        builder: (context) => AlertDialog(
+          content: Text("Academic Year can only be added in June"),
+          icon: Icon(Icons.cancel_outlined),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text("OK"))
+          ],
+        ),
+      );
+      return;
+    }
+    showAcademicAddDialog(expected_year);
+  }
+
+  void showAcademicAddDialog(String expected_year) async{
+
     bool isAcademicYearAdded = false;
     final TextEditingController academicYearController = TextEditingController();
     final formKey = GlobalKey<FormState>();
@@ -38,8 +61,12 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
         body: jsonEncode({"academic_year": academicYearController.text}),
       );
 
+      String msg = "";
+      var data = jsonDecode(response.body);
+      msg = data["message"].toString();
+
       if (response.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Academic Year Added!")));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
         setState(() {
           isAcademicYearAdded = false;
           academicList = Modules.FetchAcademicYearList();
@@ -50,7 +77,7 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
           isAcademicYearAdded = false;
         });
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add academic year")));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       }
     }
 
@@ -77,6 +104,8 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
                   validator: (value){
                     if(value!.isEmpty || value == null){
                       return "Enter Academic Year";
+                    }else if (value != expected_year) {
+                      return "Only $expected_year can be added.";
                     }
                     return null;
                   },
@@ -87,6 +116,9 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
           actions: [
             TextButton(onPressed: (){ Navigator.pop(context); }, child: Text("Cancel")),
             TextButton(onPressed:() async{
+              setState(() {
+                isAcademicYearAdded = true;
+              });
               if(formKey.currentState!.validate()){
                 await addAcademicYear();
               }
@@ -114,7 +146,7 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
       ),
       floatingActionButton: FloatingActionButton(
           onPressed: (){
-            showAcademicAddDialog();
+            validateAndShowAcademicDialog();
           },
         child: Icon(Icons.add),
         backgroundColor: Colors.redAccent,

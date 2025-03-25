@@ -226,15 +226,33 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                 isLoadingYear ? CircularProgressIndicator():
                 buildDropDownButton(labelText:  "Select Year", items: yearList, selectedValue: selectedYear,
                     onChanged: (value) async{
+                      semesterList= await Modules.FetchSemesterList(academicYearId: selectedAcademicYear.toString());
                   setState(() {
                     selectedYear = value;
                     isLoadingDivision = true;
+                    selectedSemester =null;
+                    String? selectedYearLabel = yearList.firstWhere((element) => element["class_id"].toString() == selectedYear.toString(),
+                      orElse: () => {"year": null},
+                    )["year"];
+
+                    if (selectedYearLabel == "FY") {
+                      semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "1" ||
+                          sem["semester_number"].toString() == "2").toList();
+                    } else if (selectedYearLabel == "SY") {
+                      semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "3" ||
+                          sem["semester_number"].toString() == "4").toList();
+                    } else if (selectedYearLabel == "TY") {
+                      semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "5" ||
+                          sem["semester_number"].toString() == "6").toList();
+                    }
+
                   });
                   FetchDivision();
                   selectedFaculties = List.filled(divList.length, null);
                   setState(() {
                     isLoadingDivision = false;
                   });
+
                 },id_name: "class_id", name: "year"),
 
                 SizedBox(height: 25,),
