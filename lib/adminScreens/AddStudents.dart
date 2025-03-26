@@ -276,6 +276,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               setState(() {
                 studentDepartment=value.toString();
                 FetchYear();
+                FetchAcademicYears();
               });
             },
             validator: (value){
@@ -285,13 +286,34 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           ),
 
           SizedBox(height: 20,),
+          isLoadingAcademicYear ? CircularProgressIndicator() :
+          buildDropDownButton(labelText: "Select Academic Year", items:  academicYearList, selectedValue:  studentAcademicYear,
+              onChanged: (value) { setState(() {
+                studentAcademicYear = value.toString();
+                FetchSemesters(studentAcademicYear.toString());
+              });}, id_name: "academic_year_id", name: "academic_year"),
+
+          SizedBox(height: 20,),
           isLoadingYear ? CircularProgressIndicator() :
           buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: studentClass,
               onChanged: (value){
             setState(() {
                 studentClass = value.toString();
                 FetchDivision();
-                FetchAcademicYears();
+                String? selectedYearLabel = yearList.firstWhere((element) => element["class_id"].toString() == studentClass.toString(),
+                  orElse: () => {"year": null},
+                )["year"];
+
+                if (selectedYearLabel == "FY") {
+                  semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "1" ||
+                      sem["semester_number"].toString() == "2").toList();
+                } else if (selectedYearLabel == "SY") {
+                  semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "3" ||
+                      sem["semester_number"].toString() == "4").toList();
+                } else if (selectedYearLabel == "TY") {
+                  semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "5" ||
+                      sem["semester_number"].toString() == "6").toList();
+                }
               });}, id_name: "class_id",name: "year"),
 
           SizedBox(height: 20,),
@@ -300,14 +322,6 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
               onChanged: (value){setState(() {
                 studentDivision = value.toString();
               });}, id_name: "division_id", name: "division"),
-
-          SizedBox(height: 20,),
-          isLoadingAcademicYear ? CircularProgressIndicator() :
-          buildDropDownButton(labelText: "Select Academic Year", items:  academicYearList, selectedValue:  studentAcademicYear,
-              onChanged: (value) { setState(() {
-                studentAcademicYear = value.toString();
-                FetchSemesters(studentAcademicYear.toString());
-              });}, id_name: "academic_year_id", name: "academic_year"),
 
           SizedBox(height: 20,),
           isLoadingSemester ? CircularProgressIndicator() :

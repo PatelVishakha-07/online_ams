@@ -39,9 +39,14 @@ class _SubjectDetailScreenState extends State<SubjectDetailScreen> {
         subSemester = subjectData["semester_no"].toString();
         subDepartment = subjectData["department"];
 
-        faculty_List = subjectData["faculty_list"].map((faculty) => {
-          "faculty_name":faculty["faculty_name"],
-          "division":faculty["division"].toString()
+        faculty_List = (subjectData["faculty_list"] as List).map((faculty) => {
+          "faculty_name": faculty["faculty_name"],
+          "division": int.tryParse(faculty["division"].toString()) ?? 0 // Convert to int
+        }).toList();
+        faculty_List.sort((a, b) => a["division"].compareTo(b["division"]));
+        faculty_List = faculty_List.map((faculty) => {
+          "faculty_name": faculty["faculty_name"],
+          "division": faculty["division"].toString()
         }).toList();
       });
     }else{

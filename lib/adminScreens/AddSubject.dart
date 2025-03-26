@@ -216,21 +216,21 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                         selectedAcademicYear = value.toString();
                         isLoadingSemester = true;
                       });
-                      semesterList= await Modules.FetchSemesterList(academicYearId: selectedAcademicYear.toString());
-                      setState(() {
-                        isLoadingSemester = false;
-                      });
+
                         }, id_name: "academic_year_id", name: "academic_year"),
 
                 SizedBox(height: 25),
                 isLoadingYear ? CircularProgressIndicator():
                 buildDropDownButton(labelText:  "Select Year", items: yearList, selectedValue: selectedYear,
                     onChanged: (value) async{
+                      setState(() {
+                        isLoadingSemester = true;
+                      });
                       semesterList= await Modules.FetchSemesterList(academicYearId: selectedAcademicYear.toString());
                   setState(() {
+                    isLoadingSemester = false;
                     selectedYear = value;
                     isLoadingDivision = true;
-                    selectedSemester =null;
                     String? selectedYearLabel = yearList.firstWhere((element) => element["class_id"].toString() == selectedYear.toString(),
                       orElse: () => {"year": null},
                     )["year"];
@@ -245,7 +245,6 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                       semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "5" ||
                           sem["semester_number"].toString() == "6").toList();
                     }
-
                   });
                   FetchDivision();
                   selectedFaculties = List.filled(divList.length, null);

@@ -5,11 +5,12 @@ import 'package:online_ams/adminScreens/AcademicList.dart';
 import 'package:online_ams/adminScreens/Faculty.dart';
 import 'package:online_ams/adminScreens/ListDetails.dart';
 import 'package:online_ams/adminScreens/Password.dart';
+import 'package:online_ams/adminScreens/PromoteStudent.dart';
 import 'package:online_ams/adminScreens/Students.dart';
 import 'package:online_ams/adminScreens/Subject.dart';
 
 var URL="https://fancy-rat-curiously.ngrok-free.app";
-
+//fancy-rat-curiously.ngrok-free.app
 class AdminScreen extends StatefulWidget {
   const AdminScreen({super.key});
 
@@ -26,6 +27,7 @@ class _AdminScreenState extends State<AdminScreen> {
       {"Title":"Student", "Icon":Icons.people, "route": StudentScreen()},
       {"Title":"Subject", "Icon":Icons.subject_outlined, "route": SubjectScreen()},
       {"Title":"View Username", "Icon":Icons.lock_outline, "route": UsernameRoleScreen()},
+      {"Title":"Promote Students", "Icon":Icons.upgrade, "route": ListScreen(option: "Promote",)},
     ];
 
   @override
@@ -37,7 +39,7 @@ class _AdminScreenState extends State<AdminScreen> {
       appBar: AppBar(
         title: Text("Dashboard\n   (Admin)",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
         centerTitle: true,
-        backgroundColor: Colors.pink[50],
+        backgroundColor: Colors.pink.shade50,
         actions: [
           IconButton(
               onPressed: (){

@@ -21,6 +21,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
   bool isLoading = false;
   String? stdName, stdDept, stdContact, stdDob, year, division, academic_year, semester, stdRollNo;
   List<dynamic> attendanceData = [];
+  String? firstName;
 
   @override
   void initState() {
@@ -93,6 +94,8 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
         if(studentDetail.isNotEmpty){
           var student = studentDetail.firstWhere((e) => e["student_id"] == widget.student_id, orElse: () =>null);
           stdName = student["name"];
+          var fullName = stdName!.split(" ");
+          firstName = fullName[0].toString();
           stdDept = student["department"];
           stdContact = student["contact_no"];
           stdRollNo = student["student_id"].toString();
@@ -119,7 +122,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(((stdName?? "Student") + "\n                    (Profile)"),style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+        title: Text(((firstName?? "Student") + " Profile"),style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
         centerTitle: true,
         backgroundColor: Colors.pink[50],
       ),

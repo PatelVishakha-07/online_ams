@@ -61,6 +61,7 @@ class Attendance{
     if(studentPosition == null){
       return "Location Permission Required";
     }
+    print("-------Student Location: ${studentPosition.latitude}, ${studentPosition.longitude}");
 
     final facultyLocationList = await FetchFacultyLocation(class_id, division_id);
 
@@ -74,6 +75,13 @@ class Attendance{
     }else{
       return "Time to Mark Attendance is Over.";
     }
+    print("-------faculty: lat= $faculty_latitude ---- lon= $faculty_longitude");
+    print("-----------area= $allowed_radius");
+    print("-----------mm area= ${allowed_radius/1000}");
+
+    double distance = Geolocator.distanceBetween(faculty_latitude, faculty_longitude,
+        studentPosition.latitude, studentPosition.longitude);
+    print("--------------distance-------$distance");
 
     if(!CheckStudentArea(faculty_latitude, faculty_longitude, studentPosition.latitude, studentPosition.longitude, allowed_radius)){
       return "You are not in the allowed area!";

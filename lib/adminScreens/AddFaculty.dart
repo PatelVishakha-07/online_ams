@@ -46,12 +46,15 @@ class _AddFacultyScreenState extends State<AddFacultyScreen> {
           child: Column(
             children: [
               Text("Select type: ",style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold),),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  buildRadioButton("Add Single Record"),
-                  buildRadioButton("Add Excel File"),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    buildRadioButton("Add Single Record"),
+                    buildRadioButton("Add Excel File"),
+                  ],
+                ),
               ),
               SizedBox(height: 20,),
               if(selectedOption == "Add Single Record")...[

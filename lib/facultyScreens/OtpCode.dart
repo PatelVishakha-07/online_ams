@@ -40,7 +40,8 @@ class _OTPScrState extends State<OTPScreen> {
       body: jsonEncode({
         "faculty_id":widget.faculty_id,
         "role":"Faculty",
-        "class_id":selectedYear
+        "class_id":selectedYear,
+        "division":selectedDivision
       })
     );
     if(response.statusCode == 200){
@@ -148,13 +149,17 @@ class _OTPScrState extends State<OTPScreen> {
                       onChanged: (value){ setState(() {
                         selectedYear=value.toString();
                         FetchDivision();
-                        FetchSubjectList();
                       }); }, id_name: "class_id", name: "year"),
 
                   SizedBox(height: 20,),
                   isLoadingDivision ? CircularProgressIndicator() :
                   buildDropDownButton(labelText: "Select Division", items: divisionList, selectedValue: selectedDivision,
-                      onChanged: (value){ setState(() { selectedDivision=value.toString(); }); },
+                      onChanged: (value){
+                    setState(() {
+                      subjectList.clear();
+                      selectedDivision=value.toString();
+                      FetchSubjectList();
+                    }); },
                       id_name: "division_id", name: "division", icon: Icons.splitscreen),
 
                   SizedBox(height: 20,),
@@ -202,7 +207,7 @@ class _OTPScrState extends State<OTPScreen> {
                         Position? facultyLocation = await Modules.GetCurrentLocation();
                         double faculty_latitude = facultyLocation!.latitude;
                         double faculty_longitude = facultyLocation!.longitude;
-                        String areaSize = locationController.text.toString();
+                        int areaSize = int.parse(locationController.text.toString());
 
                         await Modules.SaveOtp(context, otp_code, int.parse(selectedYear!), widget.faculty_id, int.parse(selectedDivision!), created_at,
                            expiry_time, int.parse(selectedSubject!),faculty_latitude.toString(),faculty_longitude.toString(),areaSize);

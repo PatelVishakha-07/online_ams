@@ -5,8 +5,8 @@ import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/ListFaculty.dart';
 import 'package:online_ams/adminScreens/ListStudent.dart';
 import 'package:online_ams/adminScreens/ListSubject.dart';
+import 'package:online_ams/adminScreens/PromoteStudent.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
-import 'ListStudent.dart' as lstd;
 
 class ListScreen extends StatefulWidget {
   final String option;
@@ -20,12 +20,6 @@ class ListScreenState extends State<ListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Department List",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
-        backgroundColor: Colors.pink.shade50,
-        centerTitle: true,
-      ),
-      backgroundColor: Colors.pink.shade50,
       body: DepartmentListScreen(option: widget.option,)
     );
   }
@@ -40,41 +34,54 @@ class DepartmentListScreen extends StatefulWidget {
 }
 
 class _DepartmentListScreenState extends State<DepartmentListScreen> {
-  final List<String> dept =["BCA","BBA","BCOM","BSC","MCOM","MSC"];
+  final List<String> dept =["BCA","BBA","BCOM","BSC"];
 
   @override
   Widget build(BuildContext context) {
-    print("Building DepartmentListScreen");
-    return ListView.builder(
-      itemBuilder: (context,index){
-        return Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Card(
-            color: Colors.blue.shade100,
-            elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            child: ListTile(
-              leading: Icon(Icons.school,color: Colors.redAccent,),
-              title: Text(dept[index],style: TextStyle(fontWeight: FontWeight.bold,fontSize: 23)),
-              trailing: Icon(Icons.arrow_forward_ios),
-              onTap: (){
-                if(widget.option == "Faculty"){
-                  Navigator.push(context,MaterialPageRoute(
-                      builder: (context) => FacultyListScreen(facultyDepartment: dept[index])));
-                }
-                else if(widget.option == "Subject"){
-                  Navigator.push(context, MaterialPageRoute(builder: (context)=>
-                      YearScreen(department: dept[index])));
-                } else{
-                  Navigator.push(context,MaterialPageRoute(
-                      builder: (context) => Class_DivisionListScreen(department: dept[index],option: widget.option,deptList: dept,)));
-                }
-              },
-            ),
-          ),
-        );
-      },
-      itemCount: dept.length,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Department List",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+        backgroundColor: Colors.pink.shade50,
+        centerTitle: true,
+      ),
+      backgroundColor: Colors.pink.shade50,
+      body: Container(
+        color: Colors.pink.shade50,
+        child: ListView.builder(
+          itemBuilder: (context,index){
+            return Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Card(
+                color: Colors.blue.shade100,
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                child: ListTile(
+                  leading: Icon(Icons.school,color: Colors.redAccent,),
+                  title: Text(dept[index],style: TextStyle(fontWeight: FontWeight.bold,fontSize: 23)),
+                  trailing: Icon(Icons.arrow_forward_ios),
+                  onTap: (){
+                    if(widget.option == "Faculty"){
+                      Navigator.push(context,MaterialPageRoute(
+                          builder: (context) => FacultyListScreen(facultyDepartment: dept[index])));
+                    }
+                    else if(widget.option == "Subject"){
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>
+                          YearScreen(department: dept[index])));
+                    }else if(widget.option == "Promote"){
+                      Navigator.push(context, MaterialPageRoute(builder: (context)=>
+                          PromoteStudentScreen(department: dept[index])));
+                    } else{
+                      Navigator.push(context,MaterialPageRoute(
+                          builder: (context) => Class_DivisionListScreen(department: dept[index],option: widget.option,deptList: dept,)));
+                    }
+                  },
+                ),
+              ),
+            );
+          },
+          itemCount: dept.length,
+        ),
+      ),
     );
   }
 }
@@ -173,7 +180,6 @@ class _Class_DivisionListScreenState extends State<Class_DivisionListScreen> {
                                       if(value == "update"){
                                         bool classUpdated = await showClassAlertDialog(context, widget.department, "Update Class", "Update",
                                             oldYear: item["year"],oldDiv: item["division"]);
-                                        print("-------------------------$classUpdated");
                                         if(classUpdated){
                                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Record Updated Successfully")));
                                           setState(() {
@@ -239,6 +245,7 @@ class _Class_DivisionListScreenState extends State<Class_DivisionListScreen> {
                 setState(() {
                   classData = Modules.FetchData("Class", dept: widget.department);
                 });
+
               }
             },
             child: Icon(Icons.add,size: 40,),
@@ -256,6 +263,7 @@ Future<bool> showClassAlertDialog(BuildContext context, String dept, String titl
   String? selectedDivision;
   List<String> year=["FY","SY","TY"];
   List<String> division=["1","2","3"];
+  bool isLoading = false;
 
   if(titleText == "Update Class"){
     selectedClass=oldYear;
@@ -343,6 +351,11 @@ Future<bool> showClassAlertDialog(BuildContext context, String dept, String titl
                           });
                         }
                     ),
+
+                    if(isLoading) ...[
+                      SizedBox(height: 20,),
+                      CircularProgressIndicator()
+                    ]
                   ],
                 ),
 
@@ -355,11 +368,15 @@ Future<bool> showClassAlertDialog(BuildContext context, String dept, String titl
                   ),
                   ElevatedButton(
                       onPressed: () async{
+                        setState((){
+                          isLoading = true;
+                        });
                         if(titleText == "Create Class"){
                           bool success = await sendDataToAPI(titleText);
                           Navigator.pop(context,success);
                         }else if( titleText == "Update Class"){
                           bool success = await UpdateClassDivsion(context, dept, selectedClass, selectedDivision, oldYear, oldDiv);
+                          setState(() { isLoading = false; });
                           Navigator.pop(context,success);
                         }
                       },

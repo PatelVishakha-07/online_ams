@@ -208,14 +208,15 @@ import 'package:shared_preferences/shared_preferences.dart';
      if (permission == LocationPermission.deniedForever) return null;
 
      return await Geolocator.getCurrentPosition(
-         desiredAccuracy: LocationAccuracy.high);
+         desiredAccuracy: LocationAccuracy.bestForNavigation);
    }
 
    //FUNCTION TO SAVE OTP CODE IN OTP_TABLE
    static Future<void> SaveOtp(BuildContext context, String otpCode,
        int class_id, int faculty_id, int division_id, String created_at,
        String expiry_time, int subject_id, String faculty_latitude,
-       String faculty_longitude, String area) async {
+       String faculty_longitude, int area) async {
+
      final uri = Uri.parse(URL + "/addOtp");
      final response = await http.post(
          uri,

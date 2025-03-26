@@ -129,95 +129,98 @@ class _LoginScreen extends State<LoginScreen> {
             padding: EdgeInsets.all(20.0),
             child: Form(
               key: formKey,
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 400,
-                    height: 350,
-                    padding: EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [Colors.indigoAccent.shade100,Colors.white54]
+              child: Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      height: 350,
+                      padding: EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [Colors.indigoAccent.shade100,Colors.white54]
+                        ),
+                          borderRadius: BorderRadius.circular(15),
+                          boxShadow: [
+                            BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 10,
+                                spreadRadius: 2
+                            )
+                          ]
                       ),
-                        borderRadius: BorderRadius.circular(15),
-                        boxShadow: [
-                          BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 10,
-                              spreadRadius: 2
-                          )
-                        ]
-                    ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
                       child: Row(
                         children: [
-                          Text(" Attendance \nManagement \nSystem",
-                            style: TextStyle(fontSize: 25,
+                          Text("Attendance \nManagement \nSystem",
+                            style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.055,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.black87),),
-                          Container(width: 200,height: 250,
-                            child: Image.asset("asset/images/attendance_logo.png", fit: BoxFit.contain,),
+                          Flexible(
+                            child: Container(
+                              width: MediaQuery.of(context).size.width * 0.9,
+                              height: 250,
+                              child: Image.asset("asset/images/attendance_logo.png", fit: BoxFit.contain,),
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-
-                  SizedBox(height: 20,),
-
-                  Text("Select Your Role: ",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),),
-                  Row(
-                    children: [
-                      buildRadioButton("Admin"),
-                      buildRadioButton("Faculty"),
-                      buildRadioButton("Student"),
-                    ],
-                  ),
-
-                  SizedBox(height: 20),
-
-                  if(selectedRole == "Admin")...[
-                    buildTextField("Enter Username", Icons.person, usernameController, keyboardType: TextInputType.text),
-                    SizedBox(height: 15,),
-                    buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true,
-                        keyboardType: TextInputType.numberWithOptions(decimal: false, signed: false))
-                  ] else
-                    ...[
+                
+                    SizedBox(height: 20,),
+                
+                    Text("Select Your Role: ",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),),
+                    Row(
+                      children: [
+                        buildRadioButton("Admin"),
+                        buildRadioButton("Faculty"),
+                        buildRadioButton("Student"),
+                      ],
+                    ),
+                
+                    SizedBox(height: 20),
+                
+                    if(selectedRole == "Admin")...[
                       buildTextField("Enter Username", Icons.person, usernameController, keyboardType: TextInputType.text),
                       SizedBox(height: 15,),
                       buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true,
-                          keyboardType: TextInputType.numberWithOptions(decimal: false, signed: false)),
-                    ],
-
-                  SizedBox(height: 25,),
-
-                  // Log in button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        if(formKey.currentState!.validate()){
-                          validateField();
-                        }
-                      },
-                      child: Text("Login", style: TextStyle(fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white),),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                          keyboardType: TextInputType.numberWithOptions(decimal: false, signed: false))
+                    ] else
+                      ...[
+                        buildTextField("Enter Username", Icons.person, usernameController, keyboardType: TextInputType.text),
+                        SizedBox(height: 15,),
+                        buildTextField("Enter Password", Icons.lock, passwordController, isPassword: true,
+                            keyboardType: TextInputType.numberWithOptions(decimal: false, signed: false)),
+                      ],
+                
+                    SizedBox(height: 25,),
+                
+                    // Log in button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if(formKey.currentState!.validate()){
+                            validateField();
+                          }
+                        },
+                        child: Text("Login", style: TextStyle(fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

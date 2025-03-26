@@ -1,6 +1,8 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:online_ams/Modules.dart';
+import 'package:online_ams/adminScreens/ListDetails.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
 
@@ -15,9 +17,12 @@ class PromoteStudentScreen extends StatefulWidget {
 class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
 
   List<Map<String, dynamic>> fyStudentList = [], syStudentList = [], tyStudentList = [];
-  bool isLoading = true;
+  bool isLoading = true, isPromoting = false;
 
   Future<void> LoadStudent() async{
+    setState(() {
+      isLoading = true;
+    });
     final results = await Future.wait([
       FetchStudent("FY"),
       FetchStudent("SY"),
@@ -53,6 +58,7 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
         child: Column(
           children: [
             Text("Department: ${widget.department}",style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),),
+
             SizedBox(height: 20,),
             buildStudentList("FY Students List", fyStudentList),
             SizedBox(height: 30,),
@@ -61,10 +67,12 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
             buildStudentList("TY Students List", tyStudentList),
             SizedBox(height: 35,),
             ElevatedButton(
-                onPressed: (){
-                  PromoteStudents();
+                onPressed: () async{
+                  await PromoteStudents();
+                  LoadStudent();
                 },
-                child: Text("Promote Selected")
+                child: isPromoting ? CircularProgressIndicator(color: Colors.black,) :
+                Text("Promote Selected")
             )
           ],
         ),
@@ -128,7 +136,7 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "year": year,
-          "department": widget.department
+          "department": widget.department,
         })
     );
     if (response.statusCode == 200) {
@@ -142,7 +150,9 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
             "isChecked": true,
             "year": student["year"],
             "semester_number": student["semester_number"],
-            "academic_year": student["academic_year"]
+            "academic_year": student["academic_year"],
+            "class_id":student["class_id"],
+            "academic_year_id":student["academic_year_id"]
           };
         }).toList();
       } else {
@@ -155,7 +165,6 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
       return [];
     }
   }
-
 
   Future<void> PromoteStudents() async {
     List<Map<String, dynamic>> selectedStudents = [];
@@ -179,9 +188,14 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
         )
     );
 
-    if (!isPromote) return;
+    if (!isPromote) {
+      return;
+    }
 
     if (isPromote) {
+      setState(() {
+        isPromoting = true;
+      });
       for(var student in fyStudentList){
         if(student["isChecked"] == true){
           selectedStudents.add({
@@ -203,7 +217,9 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
             "department":widget.department,
             "year":student["year"],
             "semester_number":student["semester_number"],
-            "academic_year":student["academic_year"]
+            "academic_year":student["academic_year"],
+            "class_id":student["class_id"],
+            "academic_year_id":student["academic_year_id"]
           });
         }
       }
@@ -215,12 +231,17 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
             "department":widget.department,
             "year":student["year"],
             "semester_number":student["semester_number"],
-            "academic_year":student["academic_year"]
+            "academic_year":student["academic_year"],
+            "class_id":student["class_id"],
+            "academic_year_id":student["academic_year_id"]
           });
         }
       }
 
       if(selectedStudents.isEmpty){
+        setState(() {
+          isPromoting = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No Student Selected")));
         return;
       }
@@ -229,16 +250,49 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
       final response = await http.post(
           uri,
           headers: {"Content-Type":"application/json"},
-          body: jsonEncode({"student_list":selectedStudents})
+          body: jsonEncode({
+              "student_list":selectedStudents,
+          })
       );
       var data = jsonDecode(response.body);
       if(response.statusCode == 200){
+        setState(() {
+          isPromoting = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(data["message"])));
-        setState(() {});
-        LoadStudent();
       }else{
+        setState(() {
+          isPromoting = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(data["message"])));
       }
     }
+    setState(() {
+      isPromoting = false;
+    });
   }
 }
+
+
+class PromoteScreen extends StatefulWidget {
+  const PromoteScreen({super.key});
+
+  @override
+  State<PromoteScreen> createState() => _PromoteScreenState();
+}
+
+class _PromoteScreenState extends State<PromoteScreen> {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text("Department List",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+          backgroundColor: Colors.pink.shade50,
+          centerTitle: true,
+        ),
+        backgroundColor: Colors.pink.shade50,
+        body: ListScreen(option: "Promote",)
+    );
+  }
+}
+

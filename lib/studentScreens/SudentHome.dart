@@ -162,7 +162,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           children: [
                             Icon(studentDashboardItems[index]["Icon"],size: 50,color: Colors.redAccent,),
                             SizedBox(height: 15,),
-                            Text(studentDashboardItems[index]["Title"],style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                            Text(studentDashboardItems[index]["Title"],
+                                style: TextStyle(fontSize: MediaQuery.of(context).size.width * 0.05,
+                                    fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -234,7 +236,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     selectedSubject = null;
     fromDateController.clear();
     toDateController.clear();
-
+    bool isSemesterLoading = false, isSubjectLoading = false;
     bool isLoadingAcademicYear = true, isLoadingYear = true;
     bool hasFetchedAcademicYears = false, hasFetchedYearList = false;
     List academicYearList = [];
@@ -291,12 +293,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             setState(() {
                               selectedAcademicYear = value;
                             });
-                            List newSemesterList = await Modules.FetchSemesterList(academicYearId: selectedAcademicYear);
-                            setState(() {
-                              semesterList = newSemesterList.toSet().toList();
-                              selectedSemester = null;
-                              isLoadingSemester = false;
-                            });
                           }, id_name: "academic_year_id", name: "academic_year", isLoading: isLoadingAcademicYear,),
 
                         SizedBox(height: 20,),
@@ -304,6 +300,28 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             onChanged: (value) async{
                               setState(() {
                                 selectedYear = value.toString();
+                                semesterList.clear();
+                                isSemesterLoading = true;
+                              });
+                              List newSemesterList = await Modules.FetchSemesterList(academicYearId: selectedAcademicYear);
+                              setState(() {
+                                semesterList = newSemesterList.toSet().toList();
+                                selectedSemester = null;
+                                isSemesterLoading = false;
+                                String? selectedYearLabel = yearList.firstWhere((element) => element["class_id"].toString() == selectedYear.toString(),
+                                  orElse: () => {"year": null},
+                                )["year"];
+
+                                if (selectedYearLabel == "FY") {
+                                  semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "1" ||
+                                      sem["semester_number"].toString() == "2").toList();
+                                } else if (selectedYearLabel == "SY") {
+                                  semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "3" ||
+                                      sem["semester_number"].toString() == "4").toList();
+                                } else if (selectedYearLabel == "TY") {
+                                  semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "5" ||
+                                      sem["semester_number"].toString() == "6").toList();
+                                }
                               });
                             }, id_name: "class_id", name: "year"),
 
@@ -312,11 +330,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             onChanged: (value) async{
                               setState(() {
                                 selectedSemester = value;
+                                isSubjectLoading = true;
                               });
                               List newSubjectList = await Modules.FetchSubjectList(role: "Attendance_Report", dept: stdDept ?? "",
                                   year: selectedYear, semester_id: selectedSemester);
                               setState(() {
                                 subjectList = newSubjectList.toSet().toList();
+                                isSubjectLoading = false;
                               });
                             }, id_name: "semester_id", name: "semester_number", isLoading: isLoadingSemester),
 
@@ -340,20 +360,17 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
                     TextButton(
                         onPressed: (){
-
                           String selectedSubjectName = "", selectedYearName = "", selectedSemesterNo = "";
                           subjectList.forEach((e) {
                             if (e["subject_id"].toString() == selectedSubject) {
                               selectedSubjectName = e["sub_name"];
                             }
                           });
-
                           yearList.forEach((e) {
                             if (e["class_id"].toString() == selectedYear) {  // Ensure correct year selection
                               selectedYearName = e["year"];
                             }
                           });
-
                           semesterList.forEach((e) {
                             if (e["semester_id"].toString() == selectedSemester) {  // Ensure correct semester selection
                               selectedSemesterNo = e["semester_number"].toString();
