@@ -28,7 +28,7 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
     int current_year = DateTime.now().year;
     String expected_year = "$current_year-${current_year + 1}";
 
-    if (current_month != 6) {
+    if (current_month == 6) {
       showDialog(
         barrierDismissible: false,
         context: context,
@@ -232,10 +232,12 @@ class _SemesterListScreenState extends State<SemesterListScreen> {
         child: Container(height: 50,color: Colors.pink.shade50,),
       ),
       floatingActionButton: FloatingActionButton(
-          onPressed: (){
-            Navigator.push(context, MaterialPageRoute(builder: (context) =>
+          onPressed: () async{
+            await Navigator.push(context, MaterialPageRoute(builder: (context) =>
                 AcademicSetupScreen(academic_year: widget.academic_year, academic_year_id: widget.academic_year_id,)));
-            setState(() {});
+            setState(() {
+              FetchSmester();
+            });
           },
         child: Icon(Icons.add),
         backgroundColor: Colors.redAccent,

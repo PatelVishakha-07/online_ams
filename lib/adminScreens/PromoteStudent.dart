@@ -1,8 +1,6 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:online_ams/Modules.dart';
-import 'package:online_ams/adminScreens/ListDetails.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
 
@@ -174,15 +172,15 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
         context: context,
         builder: (context) => AlertDialog(
           title: Text("Promote Students"),
-          content: Text("Are you sure you want to promote all the students to the next year?"),
+          content: Text("Are you sure you want to promote all the students to the next Sem / Year?"),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text("Promote", style: TextStyle(color: Colors.blue)),
-            ),
             TextButton(
               onPressed: () => Navigator.pop(context, false),
               child: Text("Cancel", style: TextStyle(color: Colors.red)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text("Promote", style: TextStyle(color: Colors.blue)),
             ),
           ],
         )
@@ -272,27 +270,3 @@ class _PromoteStudentScreenState extends State<PromoteStudentScreen> {
     });
   }
 }
-
-
-class PromoteScreen extends StatefulWidget {
-  const PromoteScreen({super.key});
-
-  @override
-  State<PromoteScreen> createState() => _PromoteScreenState();
-}
-
-class _PromoteScreenState extends State<PromoteScreen> {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text("Department List",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
-          backgroundColor: Colors.pink.shade50,
-          centerTitle: true,
-        ),
-        backgroundColor: Colors.pink.shade50,
-        body: ListScreen(option: "Promote",)
-    );
-  }
-}
-

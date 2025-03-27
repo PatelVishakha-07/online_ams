@@ -5,7 +5,6 @@ import 'package:online_ams/adminScreens/AcademicList.dart';
 import 'package:online_ams/adminScreens/Faculty.dart';
 import 'package:online_ams/adminScreens/ListDetails.dart';
 import 'package:online_ams/adminScreens/Password.dart';
-import 'package:online_ams/adminScreens/PromoteStudent.dart';
 import 'package:online_ams/adminScreens/Students.dart';
 import 'package:online_ams/adminScreens/Subject.dart';
 

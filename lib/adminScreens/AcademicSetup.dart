@@ -85,20 +85,22 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
                 SizedBox(height: 20,),
                 buildTextField("Semester Number", Icons.safety_divider, semesterNumberController),
                 SizedBox(height: 20,),
-                ElevatedButton(
-                    onPressed: () async{
-                      if(formKey.currentState!.validate()){
-                        setState(() {
-                          isLoading = true;
-                        });
-                        await addSemester();
-                        setState(() {
-                          isLoading = false;
-                        });
-                        Navigator.pop(context);
-                      }
-                    },
-                    child: isLoading ? CircularProgressIndicator() : Text("Add Semester")),
+                Center(
+                  child: ElevatedButton(
+                      onPressed: () async{
+                        if(formKey.currentState!.validate()){
+                          setState(() {
+                            isLoading = true;
+                          });
+                          await addSemester();
+                          setState(() {
+                            isLoading = false;
+                          });
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: isLoading ? CircularProgressIndicator() : Text("Add Semester")),
+                ),
               ],
             ),
           ),

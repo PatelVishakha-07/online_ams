@@ -64,8 +64,8 @@ class _LoginScreen extends State<LoginScreen> {
   final passwordController=TextEditingController();
 
   void validateField() async{
-    String username=usernameController.text.toString();
-    String password=passwordController.text.toString();
+    String username=usernameController.text.toString().trim();
+    String password=passwordController.text.toString().trim();
 
     showDialog(
       context: context,
