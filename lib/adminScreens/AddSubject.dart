@@ -216,7 +216,6 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                         selectedAcademicYear = value.toString();
                         isLoadingSemester = true;
                       });
-
                         }, id_name: "academic_year_id", name: "academic_year"),
 
                 SizedBox(height: 25),
@@ -273,7 +272,9 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
                           child: buildDropDownButton(labelText: "Select Faculty for Division ${divList[index]["division"]}",
                               items: facultyList, selectedValue: selectedFaculties[index].toString(),
                               onChanged: (value){
-                            selectedFaculties[index] = value;
+                            setState(() {
+                              selectedFaculties[index] = value;
+                            });
                               }, id_name: "faculty_id", name: "faculty_name")
                         );
                       }),

@@ -6,15 +6,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
 import 'package:online_ams/main.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
  class Modules {
 
    // FUNCTION TO FETCH STUDENT OR FACULTY DATA
-   static Future<List<dynamic>> FetchData(String choice,
-       {String? dept, String? year, String? division,
-         String? faculty_id, String? student_id}) async {
+   static Future<List<dynamic>> FetchData(String choice, {String? dept, String? year, String? division,
+     String? faculty_id, String? student_id}) async {
      final uri = Uri.parse(URL + "/fetchData");
      final response = await http.post(uri,
          headers: {"Content-Type": "application/json"},
@@ -34,8 +32,7 @@ import 'package:shared_preferences/shared_preferences.dart';
    }
 
    // FUNCTION TO FETCH SINGLE STUDENT OR FACULTY DATA
-   static Future<List<dynamic>> FetchSingleData(String choice,
-       {String? faculty_id, String? student_id}) async {
+   static Future<List<dynamic>> FetchSingleData(String choice, {String? faculty_id, String? student_id}) async {
      final uri = Uri.parse(URL + "/fetchSingleRecord");
      final response = await http.post(uri,
          headers: {"Content-Type": "application/json"},
@@ -141,7 +138,7 @@ import 'package:shared_preferences/shared_preferences.dart';
      if (response.statusCode == 200) {
        return json.decode(response.body);
      } else {
-       throw Exception("Failed to Load Details");
+       throw Exception("No Subject Found");
      }
    }
 
@@ -163,9 +160,8 @@ import 'package:shared_preferences/shared_preferences.dart';
    }
 
    // FUNCTION TO REMOVE FACULTY
-   static Future<void> DeleteData(BuildContext context,
-       { String? option, String? student_id, String? faculty_id, String? subject_id,
-         String? class_id, String? division_id}) async {
+   static Future<String> DeleteData(BuildContext context,{ String? option, String? student_id, String? faculty_id,
+     String? subject_id, String? class_id, String? division_id}) async {
      final uri = Uri.parse(URL + "/deleteRecord");
      final response = await http.post(
          uri,
@@ -179,11 +175,14 @@ import 'package:shared_preferences/shared_preferences.dart';
            "subject_id":subject_id
          })
      );
+     final responseData = jsonDecode(response.body);
+     final String message = responseData["message"] ?? "Unknown error";
      if (response.statusCode == 200) {
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Record Deleted Successfully")));
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
      } else {
-       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Delete Record")));
+       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
      }
+     return message;
    }
 
    // FUNCTION TO GET STUDENT OR FACULTY CURRENT LOCATION

@@ -6,7 +6,6 @@ import 'package:online_ams/Modules.dart' ;
 import 'package:flutter/material.dart';
 import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:http/http.dart' as http;
-import 'package:online_ams/studentScreens/Attendance.dart';
 
 class OTPScreen extends StatefulWidget {
   final int faculty_id;
@@ -22,8 +21,8 @@ class _OTPScrState extends State<OTPScreen> {
   List<dynamic> subjectList = [], yearList = [], divisionList = [];
   late Future<List<dynamic>> facultyDetails;
   bool isLoadingYear = false, isLoadingDivision = false, isLoading = false, isLoadingSubject = false;
-  List<String> departmentList = ["BCA", "BBA", "BCOM", "BSC", "MSC", "MCOM"];
-  String? facultyDepartment = "", selectedYear, selectedDivision, selectedSubject;
+  List<String> departmentList = ["BCA", "BBA", "BCOM", "BSC"];
+  String facultyDepartment = "", selectedYear = "", selectedDivision = "", selectedSubject = "";
 
   TextEditingController locationController = TextEditingController();
   TextEditingController validTimeController = TextEditingController();
@@ -41,7 +40,7 @@ class _OTPScrState extends State<OTPScreen> {
         "faculty_id":widget.faculty_id,
         "role":"Faculty",
         "class_id":selectedYear,
-        "division":selectedDivision
+        "division_id":selectedDivision
       })
     );
     if(response.statusCode == 200){

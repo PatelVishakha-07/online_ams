@@ -16,12 +16,12 @@ class ListStudentScreen extends StatefulWidget {
 class _ListStudentScreenState extends State<ListStudentScreen> {
 
   late Future<List<dynamic>> studentList;
-  List<dynamic> filteredStudents = [];
-  List<dynamic> allStudents = [];
+  List<dynamic> filteredStudents = [], allStudents = [];
   TextEditingController searchController = TextEditingController();
   String searchQuery = "", currentAcademicYearId = "";
   Set<int> selectedIndexes={};
   int totalIndex=0;
+  bool isStudentLoading = false;
   
   @override
   void initState() {
@@ -36,11 +36,15 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
   }
 
   void fetchStudents() async{
+    setState(() {
+      isStudentLoading = true;
+    });
     List<dynamic> students = await Modules.FetchData("Student",dept: widget.stdDepartment,year: widget.stdYear, division: widget.stdDivision);
     setState(() {
       allStudents = students;
       filteredStudents = students;
       totalIndex = students.length;
+      isStudentLoading = false;
     });
   }
 
@@ -137,8 +141,10 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
               ),
             ),
           ),
+
           Expanded(
-              child: filteredStudents.isEmpty ? Center(child: Text("No students found")) :
+              child: isStudentLoading ? Center(child: CircularProgressIndicator()) :
+              filteredStudents.isEmpty ? Center(child: Text("No Students found")) :
               ListView.builder(
                   itemCount: filteredStudents.length,
                   itemBuilder: (context,index){
@@ -170,9 +176,12 @@ class _ListStudentScreenState extends State<ListStudentScreen> {
                                   icon: Icon(Icons.more_vert),
                                   onSelected: (value)async {
                                     if (value == "update") {
-                                      Navigator.push(context, MaterialPageRoute(builder:
+                                      await Navigator.push(context, MaterialPageRoute(builder:
                                           (context) => UpdateStudentScreen(student_id: item["student_id"])));
-                                      }
+                                      setState(() {
+                                        fetchStudents();
+                                      });
+                                    }
                                     else if (value == "remove") {
                                       bool confirmDelete = await showDialog(
                                           context: context,
