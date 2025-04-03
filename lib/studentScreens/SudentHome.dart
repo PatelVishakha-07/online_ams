@@ -99,6 +99,17 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
         centerTitle: true,
         actions: [
           IconButton(
+            onPressed: () {
+              setState(() {
+                FetchImage();
+                FetchDetails();
+              });
+            },
+            icon: Icon(Icons.refresh, color: Colors.blue),
+            tooltip: "Reload",
+          ),
+
+          IconButton(
               onPressed: (){
                 Modules.showLogoutDialog(context);
               },

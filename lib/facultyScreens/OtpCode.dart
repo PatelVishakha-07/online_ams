@@ -21,7 +21,7 @@ class _OTPScrState extends State<OTPScreen> {
   List<dynamic> subjectList = [], yearList = [], divisionList = [];
   late Future<List<dynamic>> facultyDetails;
   bool isLoadingYear = false, isLoadingDivision = false, isLoading = false, isLoadingSubject = false;
-  List<String> departmentList = ["BCA", "BBA", "BCOM", "BSC"];
+  List<String> departmentList = ["BCA", "BBA", "BCOM", "BSC" ];
   String facultyDepartment = "", selectedYear = "", selectedDivision = "", selectedSubject = "";
 
   TextEditingController locationController = TextEditingController();
@@ -206,7 +206,7 @@ class _OTPScrState extends State<OTPScreen> {
                         Position? facultyLocation = await Modules.GetCurrentLocation();
                         double faculty_latitude = facultyLocation!.latitude;
                         double faculty_longitude = facultyLocation!.longitude;
-                        int areaSize = int.parse(locationController.text.toString());
+                        double areaSize = double.parse(locationController.text.toString());
 
                         await Modules.SaveOtp(context, otp_code, int.parse(selectedYear!), widget.faculty_id, int.parse(selectedDivision!), created_at,
                            expiry_time, int.parse(selectedSubject!),faculty_latitude.toString(),faculty_longitude.toString(),areaSize);

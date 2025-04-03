@@ -20,6 +20,7 @@ class _SubjectListScreenState extends State<SubjectListScreen> {
 
   late Future<List<dynamic>> subjectList;
   int totalIndex=0;
+  bool isLoadingSubject = true;
 
   @override
   void initState() {

@@ -138,7 +138,7 @@ import 'package:shared_preferences/shared_preferences.dart';
      if (response.statusCode == 200) {
        return json.decode(response.body);
      } else {
-       throw Exception("No Subject Found");
+       throw "No Subject Found";
      }
    }
 
@@ -214,7 +214,7 @@ import 'package:shared_preferences/shared_preferences.dart';
    static Future<void> SaveOtp(BuildContext context, String otpCode,
        int class_id, int faculty_id, int division_id, String created_at,
        String expiry_time, int subject_id, String faculty_latitude,
-       String faculty_longitude, int area) async {
+       String faculty_longitude, double area) async {
 
      final uri = Uri.parse(URL + "/addOtp");
      final response = await http.post(

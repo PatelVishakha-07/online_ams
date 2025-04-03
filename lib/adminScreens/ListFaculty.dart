@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:online_ams/Modules.dart';
 import 'package:online_ams/adminScreens/FacultyDetails.dart';
 import 'package:online_ams/adminScreens/UpdateFaculty.dart';
-import 'ListStudent.dart' as lstd;
 
 class FacultyListScreen extends StatefulWidget {
   final String facultyDepartment;
@@ -20,6 +19,7 @@ class _FacultyListScreenState extends State<FacultyListScreen> {
   String searchQuery = "";
   Set<int> selectedIndexes={};
   int totalIndex=0;
+  bool isLoadingFaculty = false;
 
  @override
   void initState() {
@@ -34,11 +34,15 @@ class _FacultyListScreenState extends State<FacultyListScreen> {
   }
 
   void FetchFaculty() async{
+   setState(() {
+     isLoadingFaculty = true;
+   });
     List<dynamic> faculty = await Modules.FetchData("Faculty", dept: widget.facultyDepartment);
     setState(() {
       allFaculty = faculty;
       filteredFaculty = faculty;
       totalIndex = faculty.length;
+      isLoadingFaculty = false;
     });
   }
 
@@ -125,7 +129,8 @@ class _FacultyListScreenState extends State<FacultyListScreen> {
             ),
           ),
           Expanded(
-              child: filteredFaculty.isEmpty ? Center(child: Text("No Faculty found")) :
+              child: isLoadingFaculty ? Center(child: CircularProgressIndicator(),) :
+              filteredFaculty.isEmpty ? Center(child: Text("No Faculty found")) :
               ListView.builder(
                   itemCount: filteredFaculty.length,
                   itemBuilder: (context,index){
@@ -162,7 +167,7 @@ class _FacultyListScreenState extends State<FacultyListScreen> {
                                         UpdateFacultyScreen(faculty_id: item["faculty_id"],)));
 
                                     setState(() {
-                                      facultyList = Modules.FetchData("Faculty", dept: widget.facultyDepartment);
+                                      FetchFaculty();
                                     });
                                   }
                                   else if(value == "delete"){

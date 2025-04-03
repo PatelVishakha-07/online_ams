@@ -122,7 +122,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(((firstName?? "Student") + " Profile"),style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+        title: Text((("$firstName's " ?? "Student's") + " Profile"),style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
         centerTitle: true,
         backgroundColor: Colors.pink[50],
       ),

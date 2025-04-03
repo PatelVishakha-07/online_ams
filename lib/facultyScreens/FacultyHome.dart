@@ -3,14 +3,9 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:online_ams/Modules.dart';
-import 'package:online_ams/adminScreens/ListSubject.dart';
-import 'package:online_ams/adminScreens/adminScreen.dart';
 import 'package:online_ams/facultyScreens/FacultySubjectList.dart';
 import 'package:online_ams/facultyScreens/OtpCode.dart';
-import 'package:http/http.dart' as http;
 import 'package:online_ams/facultyScreens/StudentReport.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-
 
 class FacultyHomeScreen extends StatefulWidget {
   final String username;
@@ -47,7 +42,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   Widget build(BuildContext context) {
     if (faculty_id == null) {
       return Scaffold(
-        body: Center(child: CircularProgressIndicator()), // Show loading
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -134,6 +129,16 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
         centerTitle: true,
         backgroundColor: Colors.pink[50],
         actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                FetchDetails();
+              });
+            },
+            icon: Icon(Icons.refresh_outlined, color: Colors.blue),
+            tooltip: "Reload",
+          ),
+
           IconButton(
               onPressed: (){
                 Modules.showLogoutDialog(context);
