@@ -58,37 +58,39 @@ class Attendance{
     }
 
     Position? studentPosition = await Modules.GetCurrentLocation();
+
     if(studentPosition == null){
       return "Location Permission Required";
     }
-    print("-------Student Location: ${studentPosition.latitude}, ${studentPosition.longitude}");
 
     final facultyLocationList = await FetchFacultyLocation(class_id, division_id);
 
     double faculty_latitude =0.0, faculty_longitude=0.0, allowed_radius=0.0;
+
+    if (facultyLocationList == null || facultyLocationList.isEmpty) {
+      return "Time to Mark Attendance is Over.";
+    }
 
     if (facultyLocationList != null && facultyLocationList.isNotEmpty) {
       final facultyLocation = facultyLocationList[0];
       faculty_latitude = double.parse(facultyLocation["faculty_latitude"].toString());
       faculty_longitude = double.parse(facultyLocation["faculty_longitude"].toString());
       allowed_radius = double.parse(facultyLocation["area"].toString());
-    }else{
-      return "Time to Mark Attendance is Over.";
     }
-    print("-------faculty: lat= $faculty_latitude ---- lon= $faculty_longitude");
-    print("-----------area= $allowed_radius");
-    print("-----------mm area= ${allowed_radius/1000}");
 
     double distance = Geolocator.distanceBetween(faculty_latitude, faculty_longitude,
         studentPosition.latitude, studentPosition.longitude);
-    print("--------------distance-------$distance");
+    print("-----------------------------");
+    print("distance= $distance");
+    print("-----------------------------");
 
-    if(!CheckStudentArea(faculty_latitude, faculty_longitude, studentPosition.latitude, studentPosition.longitude, allowed_radius)){
+    print("Student GPS Accuracy: ${studentPosition.accuracy}");
+    print("Faculty GPS Accuracy: ${faculty_latitude}, ${faculty_longitude}");
+
+    if(!CheckStudentArea(faculty_latitude, faculty_longitude, studentPosition.latitude!, studentPosition.longitude!, allowed_radius)){
       return "You are not in the allowed area!";
     }
-
     return "Valid";
-
   }
 
   // FUNCTION TO SHOW DIALOGBOX TO MARK ATTENDANCE FOR STUDENT

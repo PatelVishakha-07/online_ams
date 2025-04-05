@@ -28,8 +28,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   late Future<List<dynamic>> studentDetails = Future.value([]);
   String? stdDept, stdYear, stdDiv, stdName, stdContact, stdDob, stdRollNo;
   String? classId, divId, semester_id, academic_year_id;
-  late List<dynamic> subjectList =[], semesterList =[], yearList=[], academicYearList=[];
-  bool isLoadingSemester = false,  isLoading = false;
+
+  bool isLoading = false;
   String? selectedSubject, fromDate = "", toDate ="", selectedSemester = "", selectedYear = "", selectedAcademicYear = "";
   TextEditingController fromDateController = TextEditingController(), toDateController = TextEditingController();
 
@@ -250,10 +250,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     bool isSemesterLoading = false, isSubjectLoading = false;
     bool isLoadingAcademicYear = true, isLoadingYear = true;
     bool hasFetchedAcademicYears = false, hasFetchedYearList = false;
-    List academicYearList = [];
-    List yearList = [];
-    semesterList = [];
-    subjectList = [];
+    late List<dynamic> subjectList =[], semesterList =[], yearList=[], academicYearList=[];
 
     Future<void> fetchAcademicYears(StateSetter setState) async {
       if (hasFetchedAcademicYears) return; // Prevent multiple API calls
@@ -299,6 +296,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
 
+                        isLoadingAcademicYear ? CircularProgressIndicator() :
                         buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: selectedAcademicYear,
                           onChanged: (value) async{
                             setState(() {
@@ -307,6 +305,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           }, id_name: "academic_year_id", name: "academic_year", isLoading: isLoadingAcademicYear,),
 
                         SizedBox(height: 20,),
+                        isLoadingYear ? CircularProgressIndicator() :
                         buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: selectedYear,
                             onChanged: (value) async{
                               setState(() {
@@ -319,6 +318,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                 semesterList = newSemesterList.toSet().toList();
                                 selectedSemester = null;
                                 isSemesterLoading = false;
+
                                 String? selectedYearLabel = yearList.firstWhere((element) => element["class_id"].toString() == selectedYear.toString(),
                                   orElse: () => {"year": null},
                                 )["year"];
@@ -337,6 +337,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             }, id_name: "class_id", name: "year"),
 
                         SizedBox(height: 20,),
+                        isSemesterLoading ? CircularProgressIndicator() :
                         buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue: selectedSemester,
                             onChanged: (value) async{
                               setState(() {
@@ -349,9 +350,10 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                 subjectList = newSubjectList.toSet().toList();
                                 isSubjectLoading = false;
                               });
-                            }, id_name: "semester_id", name: "semester_number", isLoading: isLoadingSemester),
+                            }, id_name: "semester_id", name: "semester_number", isLoading: isSemesterLoading),
 
                         SizedBox(height: 20,),
+                        isSubjectLoading ? CircularProgressIndicator() :
                         buildDropDownButton(labelText: "Select Subject", items: subjectList, selectedValue: selectedSubject,
                             onChanged: (value) async{
                               setState(() {

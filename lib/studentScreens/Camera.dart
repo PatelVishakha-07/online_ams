@@ -74,6 +74,7 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
           isLoading = false;
         });
       }
+      showErrorDialog("Connection issue. Please check your network.");
     }
 
   }
@@ -103,6 +104,7 @@ class _StudentCameraScreenState extends State<StudentCameraScreen> {
           isLoading = false;
         });
       }
+      showErrorDialog("Connection issue. Please check your network.");
     }
   }
 
@@ -258,7 +260,7 @@ class _AttendanceCameraScreenState extends State<AttendanceCameraScreen> {
             Text("Processing face recognition...")
           ],
         )
-            : Container(), // Empty container while capturing image
+            : Container(),
       ),
     );
   }

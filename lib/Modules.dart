@@ -185,6 +185,7 @@ import 'package:shared_preferences/shared_preferences.dart';
      return message;
    }
 
+
    // FUNCTION TO GET STUDENT OR FACULTY CURRENT LOCATION
    static Future<Position?> GetCurrentLocation() async {
      bool serviceEnabled;
@@ -192,7 +193,7 @@ import 'package:shared_preferences/shared_preferences.dart';
      serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
      if (!serviceEnabled) {
-       await Geolocator.openLocationSettings();
+       print("Location services are disabled.");
        return null;
      }
 
@@ -201,13 +202,27 @@ import 'package:shared_preferences/shared_preferences.dart';
      if (permission == LocationPermission.denied) {
        permission = await Geolocator.requestPermission();
        if (permission == LocationPermission.denied) {
+         print("Location permission denied.");
          return null;
        }
      }
-     if (permission == LocationPermission.deniedForever) return null;
+     else if(permission == LocationPermission.deniedForever){
+       await Geolocator.openLocationSettings();
+       return null;
+     }
 
-     return await Geolocator.getCurrentPosition(
-         desiredAccuracy: LocationAccuracy.bestForNavigation);
+     final locationSettings = const LocationSettings(
+       accuracy: LocationAccuracy.bestForNavigation,
+       distanceFilter: 0,
+     );
+
+     Position currentPosition = await Geolocator.getCurrentPosition(
+       locationSettings: locationSettings,
+     );
+
+     print("---------------------current position: $currentPosition");
+     return currentPosition;
+
    }
 
    //FUNCTION TO SAVE OTP CODE IN OTP_TABLE

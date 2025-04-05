@@ -168,10 +168,10 @@ class _OTPScrState extends State<OTPScreen> {
                       id_name: "subject_id", name: "sub_name"),
 
                   SizedBox(height: 20,),
-                  buildTextFormField(validTimeController, "Enter valid time (in minutes)", Icons.timer_outlined),
+                  buildTextFormField(validTimeController, "Enter valid time (in minutes)", Icons.timer_outlined, TextInputType.number),
 
                   SizedBox(height: 20,),
-                  buildTextFormField(locationController, "Enter area (meters)", Icons.my_location),
+                  buildTextFormField(locationController, "Enter area (meters)", Icons.my_location, TextInputType.numberWithOptions(decimal: true)),
 
                   SizedBox(height: 40,),
                   ElevatedButton(
@@ -204,6 +204,7 @@ class _OTPScrState extends State<OTPScreen> {
                         int validMinutes = int.parse(validTimeController.text.toString());
                         String expiry_time = DateTime.now().add(Duration(minutes: validMinutes)).toString();
                         Position? facultyLocation = await Modules.GetCurrentLocation();
+
                         double faculty_latitude = facultyLocation!.latitude;
                         double faculty_longitude = facultyLocation!.longitude;
                         double areaSize = double.parse(locationController.text.toString());
@@ -308,7 +309,7 @@ class _OTPScrState extends State<OTPScreen> {
     );
   }
 
-  Widget buildTextFormField(TextEditingController controller, String labelText, IconData icon){
+  Widget buildTextFormField(TextEditingController controller, String labelText, IconData icon, TextInputType inputType){
     return TextFormField(
       controller: controller,
       decoration: InputDecoration(
@@ -316,7 +317,7 @@ class _OTPScrState extends State<OTPScreen> {
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         icon: Icon(icon)
       ),
-      keyboardType: TextInputType.number,
+      keyboardType: inputType,
       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       validator: (value){
         if(value == null || value.isEmpty)return labelText;
