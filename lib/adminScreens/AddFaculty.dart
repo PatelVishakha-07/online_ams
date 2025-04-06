@@ -27,7 +27,7 @@ class _AddFacultyScreenState extends State<AddFacultyScreen> {
   var facultyDobController=TextEditingController();
   String? facultyDept;
   DateTime? dob;
-  final List<String> dept=["BCA","BBA","BCOM","BSC","MCOM","MSC"];
+  final List<String> dept=["BCA","BBA","BCOM","BSC"];
   bool isLoading = false, isUploading = false;
 
   @override
@@ -168,14 +168,17 @@ Widget buildAddSingleRecord(){
                 setState(() {
                   isLoading = true;
                 });
-                bool success = await insertFacultyData();
+                String msg = await insertFacultyData();
                 setState(() {
                   isLoading = false;
                 });
-                if(success){
+                if(msg == "success"){
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Faculty added successfully!")));
                   Future.delayed(Duration(seconds: 1), () { Navigator.pop(context); });
-                }else {
+                }else if(msg == "exists"){
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Faculty record already exists.")));
+                }
+                else {
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add Faculty. Try again!")));
                 }
               }
@@ -189,7 +192,7 @@ Widget buildAddSingleRecord(){
   );
 }
 
-Future<bool> insertFacultyData() async{
+Future<String> insertFacultyData() async{
     String facultyFirstName=facultyFirstNameController.text.toString();
     String facultyMiddleName=facultyMiddleNameController.text.toString();
     String facultyLastName=facultyLastNameController.text.toString();
@@ -217,9 +220,12 @@ Future<bool> insertFacultyData() async{
       facultyContactNoController.clear();
       facultyDobController.clear();
       facultyDept = null;
-      return true;
-    }else{
-      return false;
+      return "success";
+    }else if(response.statusCode == 401){
+      return "exists";
+    }
+    else{
+      return "failed";
     }
 }
 

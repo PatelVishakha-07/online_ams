@@ -340,6 +340,14 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
     String subjectName = subjectNameController.text.toString();
     String subjectCode = subjectCodeController.text.toString();
 
+    if (facultyList.isEmpty) {
+      if (mounted) setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Please select at least one faculty.")),
+      );
+      return;
+    }
+
     final uri=Uri.parse(URL+"/addSubject");
     final response = await http.post(
         uri,
@@ -349,14 +357,14 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
           "subject_code":subjectCode,
           "subject_department":selectedDepartment,
           "class_id":selectedYear,
-          //"faculty_id":selectedFaculty,
           "academic_year_id": selectedAcademicYear,
           "semester_id": selectedSemester,
-          "faculties_list":List.generate(divList.length, (index) =>{
-            "division_id":divList[index]["division_id"],
-            "faculty_id":facultyList[index]
+
+          "faculties_list": List.generate(divList.length, (index) => {
+            "division_id": divList[index]["division_id"],
+            "faculty_id": facultyList[0]  // same faculty for all divisions
           })
-        })
+        }),
     );
     if(response.statusCode == 200){
       setState(() {});
@@ -365,7 +373,11 @@ class _AddSubjectScreenState extends State<AddSubjectScreen> {
         setState(() => isLoading = false);
         Navigator.pop(context);
       }
-    }else {
+    }else if(response.statusCode == 401){
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Subject already exists")));
+    }
+    else {
       setState(() => isLoading = false);
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to Add Subject")));
     }

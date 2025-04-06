@@ -28,7 +28,7 @@ class _AcademicYearListScreenState extends State<AcademicYearListScreen> {
     int current_year = DateTime.now().year;
     String expected_year = "$current_year-${current_year + 1}";
 
-    if (current_month == 6) {
+    if (current_month != 6) {
       showDialog(
         barrierDismissible: false,
         context: context,

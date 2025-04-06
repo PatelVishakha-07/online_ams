@@ -190,7 +190,8 @@ class _Class_DivisionListScreenState extends State<Class_DivisionListScreen> {
                                         }
                                       }
                                       else if(value == "delete"){
-                                        Modules.DeleteData(context, option: "Class", class_id: item["class_id"].toString(), division_id: item["division_id"].toString());
+                                        String msg = await Modules.DeleteData(context, option: "Class", class_id: item["class_id"].toString(), division_id: item["division_id"].toString());
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
                                         setState(() {
                                           classData = Modules.FetchData("Class", dept: widget.department);
                                         });

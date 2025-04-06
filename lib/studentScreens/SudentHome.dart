@@ -82,8 +82,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   void initState() {
     super.initState();
-    FetchImage();
     FetchDetails();
+    FetchImage();
   }
 
   @override
@@ -137,7 +137,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       child: isLoading ? CircularProgressIndicator() : imageBytes != null
                           ? SizedBox( width: 160, height: 160,
                         child: FittedBox( fit: BoxFit.cover, child: Image.memory(imageBytes!), ),)
-                          : Text("No image found"),
+                          :  Icon(Icons.image, size: 50, color: Colors.grey,),
                     ),
                   ),
                   SizedBox(height: 20,),

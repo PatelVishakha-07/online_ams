@@ -32,7 +32,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
   bool isLoadingYear = false, isLoadingDivision = false, isLoadingSemester = false, isLoadingAcademicYear = false,
       isUploading = false, isLoading = false;
 
-  final List<String> deptList =["BCA","BBA","BCOM","BSC","MSC","MCOM"];
+  final List<String> deptList =["BCA","BBA","BCOM","BSC"];
 
   Future<void> FetchYear() async{
     if(studentDepartment == null) return;
@@ -186,7 +186,7 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
     );
   }
 
-  Future<bool> insertStudentData() async{
+  Future<String> insertStudentData() async{
     String studentFirstName= studentFirstNameController.text.toString();
     String studentMiddleName=studentMiddleNameController.text.toString();
     String studentLastName=studentLastNameController.text.toString();
@@ -219,9 +219,12 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
       studentLastNameController.clear();
       studentDobController.clear();
       studentContactNoController.clear();
-      return true;
-    }else{
-      return false;
+      return "success";
+    }else if(response.statusCode == 401){
+      return "exists";
+    }
+    else{
+      return "failed";
     }
   }
 
@@ -290,16 +293,17 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
           buildDropDownButton(labelText: "Select Academic Year", items:  academicYearList, selectedValue:  studentAcademicYear,
               onChanged: (value) { setState(() {
                 studentAcademicYear = value.toString();
-                FetchSemesters(studentAcademicYear.toString());
               });}, id_name: "academic_year_id", name: "academic_year"),
 
           SizedBox(height: 20,),
           isLoadingYear ? CircularProgressIndicator() :
           buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: studentClass,
-              onChanged: (value){
+              onChanged: (value) async{
+                await FetchDivision();
+                await FetchSemesters(studentAcademicYear.toString());
             setState(() {
                 studentClass = value.toString();
-                FetchDivision();
+
                 String? selectedYearLabel = yearList.firstWhere((element) => element["class_id"].toString() == studentClass.toString(),
                   orElse: () => {"year": null},
                 )["year"];
@@ -341,15 +345,18 @@ class _AddStudentScreenState extends State<AddStudentScreen> {
                   setState(() {
                     isLoading = true;
                   });
-                  bool success = await insertStudentData();
+                  String msg = await insertStudentData();
 
                   setState(() {
                     isLoading = false;
                   });
-                  if(success){
+                  if(msg == "success"){
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Student added successfully!")));
                     Future.delayed(Duration(seconds: 1), () {Navigator.pop(context);});
-                  }else {
+                  }else if(msg == "exists"){
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Student record already exists.")));
+                  }
+                  else {
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add Student. Try again!")));
                   }
                 }

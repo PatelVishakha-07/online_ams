@@ -122,7 +122,9 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text((("$firstName's " ?? "Student's") + " Profile"),style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+        title: Text(
+          "${firstName != null ? "$firstName's" : "Student's"} Profile",
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 25),),
         centerTitle: true,
         backgroundColor: Colors.pink[50],
       ),
@@ -149,7 +151,7 @@ class _StudentDetailScreenState extends State<StudentDetailScreen> {
                           child: isLoading ? CircularProgressIndicator() : stdImage != null ?
                           SizedBox( width: 160, height: 160,
                             child: FittedBox( fit: BoxFit.cover, child: Image.memory(stdImage!), ),
-                          ) : Text("No Image"),
+                          ) : Icon(Icons.image, size: 50, color: Colors.grey,),
                         ),
                       ),
                       SizedBox(height: 50,),

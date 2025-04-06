@@ -318,7 +318,7 @@ class _OTPScrState extends State<OTPScreen> {
         icon: Icon(icon)
       ),
       keyboardType: inputType,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+      //inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       validator: (value){
         if(value == null || value.isEmpty)return labelText;
         return null;

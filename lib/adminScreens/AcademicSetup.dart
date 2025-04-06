@@ -124,7 +124,12 @@ class _AcademicSetupScreenState extends State<AcademicSetupScreen> {
       setState(() {
         isLoading = false;
       });
-    } else {
+    }else if(response.statusCode == 401){
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Semester already exists.")));
+      setState(() {
+        isLoading = false;
+      });
+    }else {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Failed to add semester")));
       setState(() {
         isLoading = false;

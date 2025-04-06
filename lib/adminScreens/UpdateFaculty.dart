@@ -30,7 +30,7 @@ class _UpdateFacultyScreenState extends State<UpdateFacultyScreen> {
   String oldFirstName="", oldLastName="", oldMiddleName="";
   DateTime? dob;
   bool isDataLoading = false, isLoading = false;
-  final List<String> dept=["BCA","BBA","BCOM","BSC","MCOM","MSC"];
+  final List<String> dept=["BCA","BBA","BCOM","BSC"];
 
   Future<void> FetchOldData() async{
     setState(() => isDataLoading = true);

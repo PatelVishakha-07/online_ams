@@ -138,7 +138,7 @@ import 'package:shared_preferences/shared_preferences.dart';
      if (response.statusCode == 200) {
        return json.decode(response.body);
      } else {
-       throw "No Subject Found";
+       return [];
      }
    }
 
