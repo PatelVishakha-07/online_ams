@@ -141,12 +141,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     ),
                   ),
                   SizedBox(height: 20,),
-                  Text("  Welcome ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 25,),
+                  Text("  Welcome, ", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  SizedBox(height: 6),
+                  Text(stdName ?? "N/A", style: TextStyle(fontSize: 22,
+                      fontWeight: FontWeight.bold, color: Colors.indigo, letterSpacing: 1.1,),
+                    textAlign: TextAlign.center,
+                  ),
+                  SizedBox(height: 6),
 
                   Center(
-                      child: Text("         "+todayDay+"\n  "+todayDate,style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),)
+                      child: Text("       "+todayDay+"\n  "+todayDate,style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),)
                   ),
+                  SizedBox(height: 6,)
                 ],
               ),
             ),
@@ -247,6 +253,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     selectedSubject = null;
     fromDateController.clear();
     toDateController.clear();
+    final formKey = GlobalKey<FormState>();
     bool isSemesterLoading = false, isSubjectLoading = false;
     bool isLoadingAcademicYear = true, isLoadingYear = true;
     bool hasFetchedAcademicYears = false, hasFetchedYearList = false;
@@ -290,81 +297,84 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                   title: Text("Fill Details to View Report"),
                   icon: Icon(Icons.document_scanner),
-                  content: SingleChildScrollView(
-                    scrollDirection: Axis.vertical,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
+                  content: Form(
+                    key: formKey,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
 
-                        isLoadingAcademicYear ? CircularProgressIndicator() :
-                        buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: selectedAcademicYear,
-                          onChanged: (value) async{
-                            setState(() {
-                              selectedAcademicYear = value;
-                            });
-                          }, id_name: "academic_year_id", name: "academic_year", isLoading: isLoadingAcademicYear,),
-
-                        SizedBox(height: 20,),
-                        isLoadingYear ? CircularProgressIndicator() :
-                        buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: selectedYear,
+                          isLoadingAcademicYear ? CircularProgressIndicator() :
+                          buildDropDownButton(labelText: "Select Academic Year", items: academicYearList, selectedValue: selectedAcademicYear,
                             onChanged: (value) async{
                               setState(() {
-                                selectedYear = value.toString();
-                                semesterList.clear();
-                                isSemesterLoading = true;
+                                selectedAcademicYear = value;
                               });
-                              List newSemesterList = await Modules.FetchSemesterList(academicYearId: selectedAcademicYear);
-                              setState(() {
-                                semesterList = newSemesterList.toSet().toList();
-                                selectedSemester = null;
-                                isSemesterLoading = false;
+                            }, id_name: "academic_year_id", name: "academic_year", isLoading: isLoadingAcademicYear,),
 
-                                String? selectedYearLabel = yearList.firstWhere((element) => element["class_id"].toString() == selectedYear.toString(),
-                                  orElse: () => {"year": null},
-                                )["year"];
+                          SizedBox(height: 20,),
+                          isLoadingYear ? CircularProgressIndicator() :
+                          buildDropDownButton(labelText: "Select Year", items: yearList, selectedValue: selectedYear,
+                              onChanged: (value) async{
+                                setState(() {
+                                  selectedYear = value.toString();
+                                  semesterList.clear();
+                                  isSemesterLoading = true;
+                                });
+                                List newSemesterList = await Modules.FetchSemesterList(academicYearId: selectedAcademicYear);
+                                setState(() {
+                                  semesterList = newSemesterList.toSet().toList();
+                                  selectedSemester = null;
+                                  isSemesterLoading = false;
 
-                                if (selectedYearLabel == "FY") {
-                                  semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "1" ||
-                                      sem["semester_number"].toString() == "2").toList();
-                                } else if (selectedYearLabel == "SY") {
-                                  semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "3" ||
-                                      sem["semester_number"].toString() == "4").toList();
-                                } else if (selectedYearLabel == "TY") {
-                                  semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "5" ||
-                                      sem["semester_number"].toString() == "6").toList();
-                                }
-                              });
-                            }, id_name: "class_id", name: "year"),
+                                  String? selectedYearLabel = yearList.firstWhere((element) => element["class_id"].toString() == selectedYear.toString(),
+                                    orElse: () => {"year": null},
+                                  )["year"];
 
-                        SizedBox(height: 20,),
-                        isSemesterLoading ? CircularProgressIndicator() :
-                        buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue: selectedSemester,
-                            onChanged: (value) async{
-                              setState(() {
-                                selectedSemester = value;
-                                isSubjectLoading = true;
-                              });
-                              List newSubjectList = await Modules.FetchSubjectList(role: "Attendance_Report", dept: stdDept ?? "",
-                                  year: selectedYear, semester_id: selectedSemester);
-                              setState(() {
-                                subjectList = newSubjectList.toSet().toList();
-                                isSubjectLoading = false;
-                              });
-                            }, id_name: "semester_id", name: "semester_number", isLoading: isSemesterLoading),
+                                  if (selectedYearLabel == "FY") {
+                                    semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "1" ||
+                                        sem["semester_number"].toString() == "2").toList();
+                                  } else if (selectedYearLabel == "SY") {
+                                    semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "3" ||
+                                        sem["semester_number"].toString() == "4").toList();
+                                  } else if (selectedYearLabel == "TY") {
+                                    semesterList = semesterList.where((sem) => sem["semester_number"].toString() == "5" ||
+                                        sem["semester_number"].toString() == "6").toList();
+                                  }
+                                });
+                              }, id_name: "class_id", name: "year"),
 
-                        SizedBox(height: 20,),
-                        isSubjectLoading ? CircularProgressIndicator() :
-                        buildDropDownButton(labelText: "Select Subject", items: subjectList, selectedValue: selectedSubject,
-                            onChanged: (value) async{
-                              setState(() {
-                                selectedSubject = value;
-                              });
-                            }, id_name: "subject_id", name: "sub_name"),
-                        SizedBox(height: 20,),
-                        buildDateField(fromDateController, "From ", Icons.today, "from"),
-                        SizedBox(height: 20,),
-                        buildDateField(toDateController, "To ", Icons.today, "to")
-                      ],
+                          SizedBox(height: 20,),
+                          isSemesterLoading ? CircularProgressIndicator() :
+                          buildDropDownButton(labelText: "Select Semester", items: semesterList, selectedValue: selectedSemester,
+                              onChanged:(value) async{
+                                setState(() {
+                                  selectedSemester = value;
+                                  isSubjectLoading = true;
+                                });
+                                List newSubjectList = await Modules.FetchSubjectList(role: "Attendance_Report", dept: stdDept ?? "",
+                                    year: selectedYear, semester_id: selectedSemester);
+                                setState(() {
+                                  subjectList = newSubjectList.toSet().toList();
+                                  isSubjectLoading = false;
+                                });
+                              }, id_name: "semester_id", name: "semester_number", isLoading: isSemesterLoading, enabled: selectedYear != null),
+
+                          SizedBox(height: 20,),
+                          isSubjectLoading ? CircularProgressIndicator() :
+                          buildDropDownButton(labelText: "Select Subject", items: subjectList, selectedValue: selectedSubject,
+                              onChanged: (value) async{
+                                setState(() {
+                                  selectedSubject = value;
+                                });
+                              }, id_name: "subject_id", name: "sub_name", enabled: selectedSemester != null),
+                          SizedBox(height: 20,),
+                          buildDateField(fromDateController, "From ", Icons.today, "from"),
+                          SizedBox(height: 20,),
+                          buildDateField(toDateController, "To ", Icons.today, "to")
+                        ],
+                      ),
                     ),
                   ),
                   actions: [
@@ -373,6 +383,9 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
 
                     TextButton(
                         onPressed: (){
+                          if (!formKey.currentState!.validate()) {
+                            return;
+                          }
                           String selectedSubjectName = "", selectedYearName = "", selectedSemesterNo = "";
                           subjectList.forEach((e) {
                             if (e["subject_id"].toString() == selectedSubject) {
@@ -409,11 +422,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   }
 
   Widget buildDropDownButton({required String labelText, required List<dynamic> items, bool isLoading = false,
-    required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name, required String? name }) {
+    required String? selectedValue,  required void Function(dynamic) onChanged, required String? id_name,
+    required String? name, bool enabled = true }) {
     return DropdownButtonFormField(
       value: items.any((item) => item[id_name].toString() == selectedValue.toString()) ? selectedValue.toString() ?? "" : null,
       validator: (value) {
-        if(value == null) return "Please select $labelText";
+        if(value == null || value =="") return "Please select $labelText";
         return null;
       },
       decoration: InputDecoration(
@@ -428,7 +442,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             child: Text(item[name].toString(),)
         );
       }).toList(),
-      onChanged: isLoading ? null : onChanged,
+      onChanged: (isLoading || !enabled)? null : onChanged,
     );
   }
 

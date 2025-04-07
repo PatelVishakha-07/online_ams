@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -184,7 +183,6 @@ import 'package:shared_preferences/shared_preferences.dart';
      }
      return message;
    }
-
 
    // FUNCTION TO GET STUDENT OR FACULTY CURRENT LOCATION
    static Future<Position?> GetCurrentLocation() async {

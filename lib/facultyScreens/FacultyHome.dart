@@ -22,6 +22,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
   int? faculty_id;
   final formKey = GlobalKey<FormState>();
+  String? facultyDept, facultyName, facultyContact, facultyDob;
 
   @override
   void initState() {
@@ -30,11 +31,17 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
   }
 
   void FetchDetails() async{
-    await Modules.FetchId(widget.username,"Faculty").then((id){
+    faculty_id = await Modules.FetchId(widget.username,"Faculty");
+
+    List<dynamic> values = await Modules.FetchSingleData("Faculty", faculty_id: faculty_id.toString());
+    if(values.isNotEmpty) {
       setState(() {
-        faculty_id = id;
+        facultyDept = values[0]["department"];
+        facultyName = values[0]["faculty_name"];
+        facultyContact = values[0]["contact_no"];
+        facultyDob = values[0]["dob"];
       });
-    });
+    }
 
   }
 
@@ -125,7 +132,7 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("Dashboard\n   (Faculty)",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
+        title: Text("Dashboard\n  (Faculty)",style: TextStyle(fontWeight: FontWeight.bold,fontSize: 25),),
         centerTitle: true,
         backgroundColor: Colors.pink[50],
         actions: [
@@ -161,10 +168,43 @@ class _FacultyHomeScreenState extends State<FacultyHomeScreen> {
                     height: 90,
                     width: 390,
                     child: Center(
-                        child: Text(todayDay+"\n"+todayDate,style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),)
+                        child: Text("     $todayDay" + "\n"+todayDate,style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),)
                     )
                 )
             ),
+
+            SizedBox(height: 20),
+            // Faculty Name Card
+            Card(
+              color: Colors.blue.shade100,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 6,
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Row(
+                  children: [
+                    CircleAvatar(radius: 28, backgroundColor: Colors.green,
+                      child: Icon(Icons.badge, size: 30, color: Colors.white),
+                    ),
+                    const SizedBox(width: 16),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Welcome,",
+                          style: TextStyle(fontSize: 18, color: Colors.black,),),
+                        Text(
+                          facultyName ?? "N/A",
+                          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87,),),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+
             SizedBox(height: 20,),
             Expanded(
               child: GridView.builder(
