@@ -318,9 +318,15 @@ class _OTPScrState extends State<OTPScreen> {
         icon: Icon(icon)
       ),
       keyboardType: inputType,
-      //inputFormatters: [FilteringTextInputFormatter.digitsOnly],
       validator: (value){
         if(value == null || value.isEmpty)return labelText;
+        String error = "";
+        if(labelText == "Enter area (meters)"){
+          error = "Area";
+        }else{
+          error = "Time";
+        }
+        if (int.tryParse(value)! < 0) return '$error must be positive';
         return null;
       },
     );
